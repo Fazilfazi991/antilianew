@@ -1,0 +1,196 @@
+@import "@fontsource/inter/300.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+
+@import "tailwindcss";
+
+@theme {
+  /* ─── Color System (Stitch / Material You palette) ───────── */
+  --color-primary:                    #000000;
+  --color-on-primary:                 #ffffff;
+  --color-primary-container:          #1c1b1b;
+  --color-on-primary-container:       #858383;
+  --color-primary-fixed:              #e5e2e1;
+  --color-primary-fixed-dim:          #c8c6c5;
+  --color-on-primary-fixed:           #1c1b1b;
+  --color-on-primary-fixed-variant:   #474646;
+  --color-inverse-primary:            #c8c6c5;
+
+  --color-secondary:                  #735a3a;
+  --color-on-secondary:               #ffffff;
+  --color-secondary-container:        #fddab2;
+  --color-on-secondary-container:     #785e3e;
+  --color-secondary-fixed:            #ffddb6;
+  --color-secondary-fixed-dim:        #e2c19b;
+  --color-on-secondary-fixed:         #291801;
+  --color-on-secondary-fixed-variant: #594325;
+
+  --color-tertiary:                   #000000;
+  --color-on-tertiary:                #ffffff;
+  --color-tertiary-container:         #1a1c1b;
+  --color-on-tertiary-container:      #838482;
+  --color-tertiary-fixed:             #e3e2e0;
+  --color-tertiary-fixed-dim:         #c7c6c5;
+  --color-on-tertiary-fixed:          #1a1c1b;
+  --color-on-tertiary-fixed-variant:  #464746;
+
+  --color-error:                      #ba1a1a;
+  --color-on-error:                   #ffffff;
+  --color-error-container:            #ffdad6;
+  --color-on-error-container:         #93000a;
+
+  --color-background:                 #fbf9f8;
+  --color-on-background:              #1b1c1c;
+
+  --color-surface:                    #fbf9f8;
+  --color-surface-bright:             #fbf9f8;
+  --color-surface-dim:                #dbd9d9;
+  --color-surface-variant:            #e4e2e2;
+  --color-surface-tint:               #5f5e5e;
+  --color-surface-container:          #efeded;
+  --color-surface-container-low:      #f5f3f3;
+  --color-surface-container-high:     #eae8e7;
+  --color-surface-container-highest:  #e4e2e2;
+  --color-surface-container-lowest:   #ffffff;
+
+  --color-on-surface:                 #1b1c1c;
+  --color-on-surface-variant:         #444748;
+  --color-inverse-surface:            #303030;
+  --color-inverse-on-surface:         #f2f0f0;
+
+  --color-outline:                    #747878;
+  --color-outline-variant:            #c4c7c7;
+
+  /* Legacy aliases — keeps admin panel and shared UI components intact */
+  --color-foreground:                 #1b1c1c;
+  --color-card:                       #ffffff;
+  --color-card-foreground:            #1b1c1c;
+  --color-popover:                    #ffffff;
+  --color-popover-foreground:         #1b1c1c;
+  --color-primary-foreground:         #ffffff;
+  --color-secondary-foreground:       #ffffff;
+  --color-muted:                      #efeded;
+  --color-muted-foreground:           #444748;
+  --color-accent:                     #000000;
+  --color-accent-foreground:          #ffffff;
+  --color-destructive:                #ba1a1a;
+  --color-destructive-foreground:     #ffffff;
+  --color-border:                     #e4e2e2;
+  --color-input:                      #e4e2e2;
+  --color-ring:                       #735a3a;
+
+  /* ─── Font Families ───────────────────────────────────────── */
+  --font-display-xl:  "Noto Serif", serif;
+  --font-headline-lg: "Noto Serif", serif;
+  --font-headline-md: "Noto Serif", serif;
+  --font-body-lg:     "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body-md:     "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-label-caps:  "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif:       "Noto Serif", serif;
+  --font-display:     "Noto Serif", serif;
+  --font-body:        "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:        "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* ─── Spacing Tokens ──────────────────────────────────────── */
+  --spacing-container-max:  1440px;
+  --spacing-unit:            8px;
+  --spacing-margin-edge:     48px;
+  --spacing-section-gap:     112px;
+  --spacing-gutter:          24px;
+
+  /* ─── Border Radius ───────────────────────────────────────── */
+  --radius:     0.25rem;
+  --radius-sm:  0.125rem;
+  --radius-md:  0.375rem;
+  --radius-lg:  0.5rem;
+  --radius-xl:  0.75rem;
+
+  /* ─── Animations ──────────────────────────────────────────── */
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* ─── Type Scale Utilities ────────────────────────────────── */
+@layer utilities {
+  .text-display-xl {
+    font-size: clamp(40px, 7vw, 80px);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    font-weight: 400;
+  }
+  .text-headline-lg {
+    font-size: clamp(32px, 5vw, 48px);
+    line-height: 1.17;
+    letter-spacing: -0.01em;
+    font-weight: 400;
+  }
+  .text-headline-md {
+    font-size: clamp(22px, 3.5vw, 32px);
+    line-height: 1.25;
+    font-weight: 400;
+  }
+  .text-body-lg {
+    font-size: 18px;
+    line-height: 32px;
+    font-weight: 400;
+  }
+  .text-body-md {
+    font-size: 16px;
+    line-height: 28px;
+    font-weight: 400;
+  }
+  .text-label-caps {
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+}
+
+/* ─── Animations ──────────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translate3d(0, 28px, 0); filter: blur(12px); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0);   filter: blur(0); }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes marquee-rev {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+
+/* ─── Responsive spacing overrides ───────────────────────── */
+@media (max-width: 767px) {
+  .px-margin-edge { padding-left: 20px; padding-right: 20px; }
+  .py-section-gap { padding-top: clamp(64px, 12vw, 96px); padding-bottom: clamp(64px, 12vw, 96px); }
+  .gap-gutter { gap: 16px; }
+  .mb-24 { margin-bottom: 3rem; }
+}
+
+/* ─── Base Reset ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  background: #fbf9f8;
+  color: #1b1c1c;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+#root {
+  min-height: 100vh;
+  display: block;
+}
+
+
