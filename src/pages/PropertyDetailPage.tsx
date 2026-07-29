@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { fetchPropertyBySlug } from '@/lib/queries/properties';
 import { formatPrice, getPropertyWhatsAppURL } from '@/lib/utils';
 import type { Property, PropertyImage } from '@/lib/types';
+import { getPropertyCategory, getTransactionType, transactionLabel } from '@/lib/propertyTaxonomy';
 
 const TYPE_LABELS: Record<string, string> = {
   apartment: 'Apartment', villa: 'Villa', townhouse: 'Townhouse',
@@ -10,10 +11,8 @@ const TYPE_LABELS: Record<string, string> = {
   compound: 'Compound', shop: 'Shop', office: 'Office', warehouse: 'Warehouse',
 };
 
-function getBackLabel(category: Property['category']) {
-  if (category === 'rent') return 'Back to other properties for rent';
-  if (category === 'buy') return 'Back to other properties for sale';
-  return 'Back to commercial properties';
+function getBackLabel(property: Property) {
+  return `Back to other properties ${transactionLabel(getTransactionType(property), true).toLowerCase()}`;
 }
 
 function getReferenceNumber(property: Property) {
@@ -84,7 +83,8 @@ export function PropertyDetailPage() {
     : [{ url: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200', alt: property.title, order: 0, is_primary: true }];
 
   const mosaicImages = getMosaicImages(images);
-  const isCommercial = property.category === 'commercial';
+  const category = getPropertyCategory(property);
+  const isResidential = category === 'residential';
   const referenceNumber = getReferenceNumber(property);
   const description = property.description?.trim() ?? '';
   const showReadMore = description.length > 360;
@@ -101,7 +101,7 @@ export function PropertyDetailPage() {
             className="inline-flex items-center gap-3 font-body-md text-body-md text-primary transition-colors hover:text-secondary"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 22 }}>chevron_left</span>
-            {getBackLabel(property.category)}
+            {getBackLabel(property)}
           </Link>
 
           <div className="flex items-center gap-5 sm:justify-end">
@@ -186,7 +186,8 @@ export function PropertyDetailPage() {
                 {TYPE_LABELS[property.type] ?? property.type}
               </span>
 
-              {!isCommercial && (
+              {!isResidential && null}
+              {isResidential && (
                 <>
                   <span className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-surface-container px-3.5 font-body-md !text-[14px] !leading-none text-primary">
                     <span className="material-symbols-outlined text-outline" style={{ fontSize: 20 }}>bed</span>
@@ -317,7 +318,6 @@ export function PropertyDetailPage() {
     </div>
   );
 }
-
 
 
 

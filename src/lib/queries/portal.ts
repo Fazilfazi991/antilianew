@@ -66,6 +66,7 @@ export async function fetchMyListingById(id: string, userId: string): Promise<Pr
 type PortalFormData = {
   title: string;
   description: string;
+  transaction_type: NonNullable<Property['transaction_type']>;
   category: Property['category'];
   type: Property['type'];
   price: number;

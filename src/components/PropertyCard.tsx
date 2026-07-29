@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { Property } from '@/lib/types';
 import { formatPrice, getPrimaryImage } from '@/lib/utils';
+import { getPropertyCategory, getTransactionType, transactionLabel } from '@/lib/propertyTaxonomy';
 
 interface PropertyCardProps {
   property: Property;
@@ -13,9 +14,7 @@ function getStatusLabel(property: Property): string {
   if (property.status === 'rented') return 'Rented';
   if (property.status === 'sold') return 'Sold';
   if (property.status === 'available') return 'Available';
-  if (property.category === 'buy') return 'For Sale';
-  if (property.category === 'rent') return 'For Rent';
-  return 'Commercial';
+  return transactionLabel(getTransactionType(property), true);
 }
 
 function getTypeLabel(type: Property['type']): string {
@@ -34,7 +33,8 @@ export function PropertyCard({ property, index = 0 }: PropertyCardProps) {
   const [activeImage, setActiveImage] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
   const image = images[activeImage] ?? images[0];
-  const isCommercial = property.category === 'commercial';
+  const category = getPropertyCategory(property);
+  const isResidential = category === 'residential';
   const reduced = useReducedMotion();
   const hasSlider = images.length > 1;
 
@@ -141,12 +141,15 @@ export function PropertyCard({ property, index = 0 }: PropertyCardProps) {
         </p>
 
         <div className="mt-auto flex h-9 items-center gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <span className="inline-flex h-9 shrink-0 items-center rounded-full bg-primary px-3 font-body-md text-[13px] leading-none text-on-primary">
+            {transactionLabel(getTransactionType(property), true)} · {category}
+          </span>
           <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-surface-container px-3 font-body-md text-[14px] leading-none text-primary">
             <span className="material-symbols-outlined text-outline" style={{ fontSize: 17 }}>apartment</span>
             {getTypeLabel(property.type)}
           </span>
 
-          {!isCommercial && (
+          {isResidential && (
             <>
               <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-surface-container px-3 font-body-md text-[14px] leading-none text-primary">
                 <span className="material-symbols-outlined text-outline" style={{ fontSize: 17 }}>bed</span>

@@ -48,8 +48,8 @@ describe('filterProperties', () => {
     expect(filterProperties(properties, DEFAULT_FILTERS)).toHaveLength(5);
   });
 
-  it('filters by category rent', () => {
-    const result = filterProperties(properties, { ...DEFAULT_FILTERS, category: 'rent' });
+  it('filters by transaction type rent', () => {
+    const result = filterProperties(properties, { ...DEFAULT_FILTERS, transactionType: 'rent' });
     expect(result).toHaveLength(2);
     result.forEach(p => expect(p.category).toBe('rent'));
   });
@@ -103,7 +103,7 @@ describe('filterProperties', () => {
   });
 
   it('combines multiple filters', () => {
-    const result = filterProperties(properties, { ...DEFAULT_FILTERS, category: 'rent', furnishing: 'furnished' });
+    const result = filterProperties(properties, { ...DEFAULT_FILTERS, transactionType: 'rent', furnishing: 'furnished' });
     expect(result).toHaveLength(2);
   });
 });

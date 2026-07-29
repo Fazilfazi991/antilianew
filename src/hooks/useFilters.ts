@@ -6,9 +6,9 @@ export function useFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const filters: PropertyFilters = {
-    category: (searchParams.get('category') as PropertyFilters['category']) || DEFAULT_FILTERS.category,
+    transactionType: (searchParams.get('transactionType') as PropertyFilters['transactionType']) || (searchParams.get('category') === 'buy' || searchParams.get('purpose') === 'sale' ? 'buy' : searchParams.get('category') === 'rent' ? 'rent' : DEFAULT_FILTERS.transactionType),
+    category: (searchParams.get('category') as PropertyFilters['category']) || (searchParams.get('segment') as PropertyFilters['category']) || DEFAULT_FILTERS.category,
     type: (searchParams.get('type') as PropertyFilters['type']) || DEFAULT_FILTERS.type,
-    segment: (searchParams.get('segment') as PropertyFilters['segment']) || DEFAULT_FILTERS.segment,
     location: searchParams.get('location') || DEFAULT_FILTERS.location,
     priceMin: searchParams.get('priceMin') || DEFAULT_FILTERS.priceMin,
     priceMax: searchParams.get('priceMax') || DEFAULT_FILTERS.priceMax,
@@ -31,6 +31,10 @@ export function useFilters() {
         next.set(key, String(value));
       }
       if (key !== 'page') next.delete('page');
+      if (key === 'transactionType' || key === 'category') {
+        next.delete('segment');
+        next.delete('purpose');
+      }
       return next;
     });
   }
@@ -41,4 +45,3 @@ export function useFilters() {
 
   return { filters, setFilter, resetFilters };
 }
-

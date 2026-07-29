@@ -3,7 +3,7 @@ import { useReducedMotion, motion } from "motion/react";
 import { Link, useNavigate } from "react-router-dom";
 
 const HEADLINE = "Curated Excellence";
-const TRANSACTION_TABS = ['Sale', 'Rent'] as const;
+const TRANSACTION_TABS = ['Buy', 'Rent'] as const;
 const SEGMENT_TABS = ['Commercial', 'Residential', 'Industrial'] as const;
 type TransactionTab = typeof TRANSACTION_TABS[number];
 type SegmentTab = typeof SEGMENT_TABS[number];
@@ -12,7 +12,7 @@ export function Hero() {
   const reduced = useReducedMotion();
   const navigate = useNavigate();
   const words = HEADLINE.split(" ");
-  const [transaction, setTransaction] = useState<TransactionTab>('Sale');
+  const [transaction, setTransaction] = useState<TransactionTab>('Buy');
   const [segment, setSegment] = useState<SegmentTab>('Residential');
   const [searchArea, setSearchArea] = useState('');
 
@@ -35,8 +35,8 @@ export function Hero() {
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const params = new URLSearchParams();
-    params.set('category', transaction === 'Sale' ? 'buy' : 'rent');
-    params.set('segment', segment.toLowerCase());
+    params.set('transactionType', transaction.toLowerCase());
+    params.set('category', segment.toLowerCase());
     if (searchArea.trim()) params.set('location', searchArea.trim());
     navigate(`/properties?${params.toString()}`);
   }
@@ -97,7 +97,7 @@ export function Hero() {
           transition={{ delay: words.length * 0.1 + 0.2, duration: 0.6 }}
         >
           <div className="overflow-hidden rounded-md border border-white/20 bg-[#f9f8f6] shadow-2xl shadow-black/30">
-            <div className="grid gap-1 bg-[#d7d1c8] sm:grid-cols-[0.72fr_1fr]">
+            <div className="grid gap-1 bg-[#d7d1c8]">
               <div className="grid grid-cols-2 gap-px bg-[#d7d1c8]">
                 {TRANSACTION_TABS.map(tab => {
                   const active = transaction === tab;
@@ -184,5 +184,4 @@ export function Hero() {
     </section>
   );
 }
-
 

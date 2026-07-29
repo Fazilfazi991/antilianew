@@ -7,6 +7,7 @@ import { AreaHighlights } from "@/components/AreaHighlights";
 import { WhyAntilia } from "@/components/WhyAntilia";
 import { Testimonials } from "@/components/Testimonials";
 import { ListCTABand } from "@/components/ListCTABand";
+import { AvailablePlatforms } from "@/components/AvailablePlatforms";
 
 export function HomePage() {
   return (
@@ -14,6 +15,7 @@ export function HomePage() {
       <Hero />
       <StatsBar />
       <CategoryShortcuts />
+      <AvailablePlatforms />
       <ServicesBento />
       <FeaturedProperties />
       <AreaHighlights />
@@ -23,4 +25,3 @@ export function HomePage() {
     </main>
   );
 }
-

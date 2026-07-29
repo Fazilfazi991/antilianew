@@ -10,7 +10,8 @@ import {
 import { slugify } from '@/lib/utils';
 import { useCities } from '@/hooks/useCities';
 import { useAuth } from '@/hooks/useAuth';
-import type { Property, PropertyCategory, PropertyType, Furnishing, PropertyStatus, PropertyImage } from '@/lib/types';
+import { PROPERTY_CATEGORIES, PROPERTY_TYPES_BY_CATEGORY, TRANSACTION_TYPES } from '@/lib/propertyTaxonomy';
+import type { Property, PropertyCategory, PropertyType, Furnishing, PropertyStatus, PropertyImage, TransactionType } from '@/lib/types';
 
 type FormData = Omit<Property, 'id' | 'created_at' | 'updated_at'>;
 
@@ -18,7 +19,8 @@ const EMPTY: FormData = {
   slug: '',
   title: '',
   description: '',
-  category: 'rent',
+  transaction_type: 'buy',
+  category: 'residential',
   type: 'apartment',
   price: 0,
   price_period: 'per year',
@@ -238,19 +240,22 @@ export function MarketingPropertyFormPage() {
                 placeholder="my-property-slug"
               />
             </Field>
-            <Field label="Category *">
-              <select className={selectClass} value={form.category} onChange={e => set('category', e.target.value as PropertyCategory)}>
-                <option value="rent">Rent</option>
-                <option value="buy">Buy</option>
-                <option value="commercial">Commercial</option>
+            <Field label="Transaction Type *">
+              <select className={selectClass} required value={form.transaction_type} onChange={e => set('transaction_type', e.target.value as TransactionType)}>
+                {TRANSACTION_TYPES.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </Field>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <Field label="Property Category *">
+              <select className={selectClass} required value={form.category} onChange={e => setForm(prev => { const category = e.target.value as PropertyCategory; return { ...prev, category, type: PROPERTY_TYPES_BY_CATEGORY[category][0] }; })}>
+                {PROPERTY_CATEGORIES.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </Field>
             <Field label="Property Type *">
               <select className={selectClass} value={form.type} onChange={e => set('type', e.target.value as PropertyType)}>
-                {['apartment','villa','townhouse','studio','penthouse','duplex','compound','shop','office','warehouse'].map(t => (
+                {PROPERTY_TYPES_BY_CATEGORY[form.category as PropertyCategory].map(t => (
                   <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
                 ))}
               </select>

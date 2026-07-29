@@ -5,6 +5,7 @@ import { useProperties } from '@/hooks/useProperties';
 import { deleteProperty, toggleFeatured, toggleStatus } from '@/lib/queries/admin';
 import { formatPrice } from '@/lib/utils';
 import type { Property } from '@/lib/types';
+import { getPropertyCategory, getTransactionType } from '@/lib/propertyTaxonomy';
 
 const STATUS_OPTIONS = ['available', 'rented', 'sold'] as const;
 const STATUS_COLORS: Record<string, string> = {
@@ -17,8 +18,13 @@ export function AdminPropertiesPage() {
   const { properties, loading, error } = useProperties();
   const [items, setItems] = useState<Property[] | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [transactionFilter, setTransactionFilter] = useState<'all' | 'buy' | 'rent'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'residential' | 'commercial' | 'industrial'>('all');
 
-  const displayed = items ?? properties;
+  const displayed = (items ?? properties).filter(property =>
+    (transactionFilter === 'all' || getTransactionType(property) === transactionFilter) &&
+    (categoryFilter === 'all' || getPropertyCategory(property) === categoryFilter)
+  );
 
   async function handleDelete(id: string, title: string) {
     if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return;
@@ -80,6 +86,15 @@ export function AdminPropertiesPage() {
         </Link>
       </div>
 
+      <div className="mb-6 flex flex-wrap gap-3">
+        <select value={transactionFilter} onChange={e => setTransactionFilter(e.target.value as typeof transactionFilter)} className="border border-surface-variant bg-background px-3 py-2 font-label-caps text-label-caps text-primary">
+          <option value="all">All transactions</option><option value="buy">Buy</option><option value="rent">Rent</option>
+        </select>
+        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value as typeof categoryFilter)} className="border border-surface-variant bg-background px-3 py-2 font-label-caps text-label-caps text-primary">
+          <option value="all">All categories</option><option value="residential">Residential</option><option value="commercial">Commercial</option><option value="industrial">Industrial</option>
+        </select>
+      </div>
+
       {loading && (
         <div className="flex items-center justify-center py-32">
           <Loader2 className="size-6 text-primary animate-spin" />
@@ -98,6 +113,8 @@ export function AdminPropertiesPage() {
             <thead>
               <tr className="border-b border-surface-variant bg-surface-container-low">
                 <th className="font-label-caps text-label-caps text-outline uppercase tracking-[0.1em] text-left px-5 py-3">Property</th>
+                <th className="font-label-caps text-label-caps text-outline uppercase tracking-[0.1em] text-left px-5 py-3 hidden lg:table-cell">Transaction</th>
+                <th className="font-label-caps text-label-caps text-outline uppercase tracking-[0.1em] text-left px-5 py-3 hidden lg:table-cell">Category</th>
                 <th className="font-label-caps text-label-caps text-outline uppercase tracking-[0.1em] text-left px-5 py-3 hidden md:table-cell">Price</th>
                 <th className="font-label-caps text-label-caps text-outline uppercase tracking-[0.1em] text-left px-5 py-3 hidden lg:table-cell">Status</th>
                 <th className="font-label-caps text-label-caps text-outline uppercase tracking-[0.1em] text-left px-5 py-3 hidden lg:table-cell">Featured</th>
@@ -124,6 +141,8 @@ export function AdminPropertiesPage() {
                       </div>
                     </div>
                   </td>
+                  <td className="px-5 py-4 hidden lg:table-cell capitalize">{getTransactionType(p)}</td>
+                  <td className="px-5 py-4 hidden lg:table-cell capitalize">{getPropertyCategory(p)}</td>
                   <td className="px-5 py-4 hidden md:table-cell">
                     <span className="font-body-md text-body-md text-on-surface-variant">
                       {formatPrice(p.price, p.currency, p.price_period)}

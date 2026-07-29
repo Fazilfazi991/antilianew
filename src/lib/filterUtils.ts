@@ -1,17 +1,13 @@
-import type { Property, PropertyFilters, PropertyType } from './types';
-
-const RESIDENTIAL_TYPES: PropertyType[] = ['apartment', 'villa', 'townhouse', 'studio', 'penthouse', 'duplex', 'compound'];
-const COMMERCIAL_TYPES: PropertyType[] = ['office', 'shop'];
+import type { Property, PropertyFilters } from './types';
+import { getPropertyCategory, getTransactionType } from './propertyTaxonomy';
 
 export function filterProperties(
   properties: Property[],
   filters: PropertyFilters
 ): Property[] {
   return properties.filter(p => {
-    if (filters.category !== 'all' && p.category !== filters.category) return false;
-    if (filters.segment === 'residential' && !RESIDENTIAL_TYPES.includes(p.type)) return false;
-    if (filters.segment === 'commercial' && !COMMERCIAL_TYPES.includes(p.type)) return false;
-    if (filters.segment === 'industrial' && p.type !== 'warehouse') return false;
+    if (filters.transactionType !== 'all' && getTransactionType(p) !== filters.transactionType) return false;
+    if (filters.category && getPropertyCategory(p) !== filters.category) return false;
     if (filters.type && p.type !== filters.type) return false;
     if (filters.location && p.area !== filters.location) return false;
     if (filters.priceMin && p.price < Number(filters.priceMin)) return false;
@@ -57,4 +53,3 @@ export function paginateProperties(
   const items = properties.slice(start, start + perPage);
   return { items, total, totalPages, page };
 }
-

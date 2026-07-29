@@ -1,4 +1,6 @@
-export type PropertyCategory = 'rent' | 'buy' | 'commercial';
+export type TransactionType = 'buy' | 'rent';
+export type PropertyCategory = 'residential' | 'commercial' | 'industrial';
+export type LegacyPropertyCategory = TransactionType | 'commercial';
 
 export type PropertyType =
   | 'apartment'
@@ -32,7 +34,9 @@ export interface Property {
   slug: string;
   title: string;
   description: string;
-  category: PropertyCategory;
+  /** Optional only while pre-taxonomy records are still being read. New writes must include it. */
+  transaction_type?: TransactionType;
+  category: PropertyCategory | LegacyPropertyCategory;
   type: PropertyType;
   price: number;
   price_period: string;
@@ -103,9 +107,9 @@ export interface SiteSetting {
 }
 
 export interface PropertyFilters {
-  category: PropertyCategory | 'all';
+  transactionType: TransactionType | 'all';
+  category: PropertyCategory | '';
   type: PropertyType | '';
-  segment: PropertySegment | '';
   location: string;
   priceMin: string;
   priceMax: string;
@@ -119,9 +123,9 @@ export interface PropertyFilters {
 }
 
 export const DEFAULT_FILTERS: PropertyFilters = {
-  category: 'all',
+  transactionType: 'all',
+  category: '',
   type: '',
-  segment: '',
   location: '',
   priceMin: '',
   priceMax: '',
@@ -133,4 +137,3 @@ export const DEFAULT_FILTERS: PropertyFilters = {
   sort: 'newest',
   page: '1',
 };
-

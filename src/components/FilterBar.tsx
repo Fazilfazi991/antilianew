@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { PropertyFilters, PropertyType, Furnishing } from '@/lib/types';
+import { PROPERTY_CATEGORIES, TRANSACTION_TYPES } from '@/lib/propertyTaxonomy';
 
 interface FilterBarProps {
   filters: PropertyFilters;
@@ -10,13 +11,6 @@ interface FilterBarProps {
   search: string;
   onSearch: (v: string) => void;
 }
-
-const CATEGORIES = [
-  { value: 'all',        label: 'All' },
-  { value: 'rent',       label: 'Rent' },
-  { value: 'buy',        label: 'Buy' },
-  { value: 'commercial', label: 'Commercial' },
-] as const;
 
 const TYPE_OPTIONS = [
   { value: '',            label: 'Any Type' },
@@ -177,8 +171,8 @@ function DropdownFilter({
 
 export function FilterBar({ filters, locations, onFilter, onReset, total, search, onSearch }: FilterBarProps) {
   const [showMore, setShowMore] = useState(false);
-  const priceMaxOptions = filters.category === 'rent' ? RENT_PRICE_MAX_OPTIONS : PRICE_MAX_OPTIONS;
-  const priceMinOptions = filters.category === 'rent' ? RENT_PRICE_MIN_OPTIONS : PRICE_MIN_OPTIONS;
+  const priceMaxOptions = filters.transactionType === 'rent' ? RENT_PRICE_MAX_OPTIONS : PRICE_MAX_OPTIONS;
+  const priceMinOptions = filters.transactionType === 'rent' ? RENT_PRICE_MIN_OPTIONS : PRICE_MIN_OPTIONS;
 
   const locationOptions = [
     { value: '', label: 'Any Location' },
@@ -186,7 +180,8 @@ export function FilterBar({ filters, locations, onFilter, onReset, total, search
   ];
 
   const hasActive =
-    filters.category !== 'all' ||
+    filters.transactionType !== 'all' ||
+    filters.category !== '' ||
     filters.type !== '' ||
     filters.location !== '' ||
     filters.priceMin !== '' ||
@@ -225,22 +220,30 @@ export function FilterBar({ filters, locations, onFilter, onReset, total, search
           />
         </div>
 
-        {/* Row 1: category tabs + sort */}
+        {/* Row 1: transaction, category and sort */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-          <div className="flex space-x-6 overflow-x-auto pb-1 md:pb-0">
-            {CATEGORIES.map((cat) => (
+          <div className="space-y-3">
+            <div className="flex space-x-6 overflow-x-auto pb-1 md:pb-0" aria-label="Transaction type">
+            <button onClick={() => onFilter('transactionType', 'all')} className={`font-label-caps text-label-caps whitespace-nowrap pb-1 transition-colors ${filters.transactionType === 'all' ? 'text-primary border-b border-primary' : 'text-on-surface-variant hover:text-primary'}`}>All</button>
+            {TRANSACTION_TYPES.map((transaction) => (
               <button
-                key={cat.value}
-                onClick={() => onFilter('category', cat.value as PropertyFilters['category'])}
+                key={transaction.value}
+                onClick={() => onFilter('transactionType', transaction.value)}
                 className={`font-label-caps text-label-caps whitespace-nowrap pb-1 transition-colors ${
-                  filters.category === cat.value
+                  filters.transactionType === transaction.value
                     ? 'text-primary border-b border-primary'
                     : 'text-on-surface-variant hover:text-primary'
                 }`}
               >
-                {cat.label}
+                {transaction.label}
               </button>
             ))}
+            </div>
+            <div className="flex space-x-5 overflow-x-auto pb-1" aria-label="Property category">
+              {PROPERTY_CATEGORIES.map((category) => (
+                <button key={category.value} onClick={() => onFilter('category', filters.category === category.value ? '' : category.value)} className={`font-label-caps text-label-caps whitespace-nowrap pb-1 transition-colors ${filters.category === category.value ? 'text-primary border-b border-primary' : 'text-on-surface-variant hover:text-primary'}`}>{category.label}</button>
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center gap-2 font-label-caps text-label-caps text-on-surface-variant">
@@ -271,12 +274,12 @@ export function FilterBar({ filters, locations, onFilter, onReset, total, search
             options={priceMaxOptions}
             onChange={(v) => onFilter('priceMax', v)}
           />
-          <DropdownFilter
+          {filters.category !== 'commercial' && filters.category !== 'industrial' && <DropdownFilter
             label="Beds"
             value={filters.bedrooms}
             options={BED_OPTIONS}
             onChange={(v) => onFilter('bedrooms', v)}
-          />
+          />}
 
           {/* More filters toggle */}
           <button
