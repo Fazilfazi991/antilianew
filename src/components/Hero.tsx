@@ -104,9 +104,13 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: words.length * 0.1 + 0.2, duration: 0.6 }}
         >
-          <div className="overflow-hidden rounded-md border border-white/20 bg-[#f9f8f6] shadow-2xl shadow-black/30">
-            <div className="grid gap-1 bg-[#d7d1c8]">
-              <div className="grid grid-cols-2 gap-px bg-[#d7d1c8]">
+          <div className="overflow-hidden rounded-[22px] border border-white/30 bg-[#17191f]/80 p-4 text-left shadow-[0_24px_70px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-5">
+            <p className="mb-3 flex items-center gap-2 font-body-md text-[15px] font-medium text-[#d9b780] sm:text-[16px]">
+              <span className="material-symbols-outlined text-[#d9b780]" style={{ fontSize: 22 }}>flare</span>
+              Start with Buy or Rent
+            </p>
+            <div className="space-y-3">
+              <div className="grid max-w-[430px] grid-cols-2 rounded-full border border-white/30 bg-black/20 p-1">
                 {TRANSACTION_TABS.map(tab => {
                   const active = transaction === tab;
                   return (
@@ -115,12 +119,13 @@ export function Hero() {
                       type="button"
                       onClick={() => selectTransaction(tab)}
                       aria-pressed={active}
-                      className={`h-10 px-4 font-body-md text-[16px] font-semibold transition-colors sm:h-11 sm:text-[18px] ${
+                      className={`flex h-12 items-center justify-center gap-2 rounded-full px-4 font-body-md text-[16px] font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#d9b780] sm:text-[18px] ${
                         active
-                          ? 'bg-[#A68966] text-white'
-                          : 'bg-[#eee9e2] text-[#1b1c1c] hover:bg-[#e4ddd4]'
+                          ? 'bg-gradient-to-br from-[#ddc08e] to-[#a98451] text-white shadow-[0_8px_20px_rgba(191,151,92,0.3)]'
+                          : 'text-white/90 hover:bg-white/10'
                       }`}
                     >
+                      <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{tab === 'Buy' ? 'business_center' : 'key'}</span>
                       {tab}
                     </button>
                   );
@@ -130,7 +135,7 @@ export function Hero() {
               <AnimatePresence initial={false}>
                 {transaction && (
                   <motion.div
-                    className="grid grid-cols-3 gap-px overflow-hidden bg-[#d7d1c8]"
+                    className="grid grid-cols-1 gap-2 overflow-hidden sm:grid-cols-3"
                     initial={reduced ? { opacity: 0 } : { opacity: 0, height: 0, y: -8 }}
                     animate={{ opacity: 1, height: 'auto', y: 0 }}
                     exit={reduced ? { opacity: 0 } : { opacity: 0, height: 0, y: -8 }}
@@ -144,10 +149,10 @@ export function Hero() {
                           type="button"
                           onClick={() => setSegment(tab)}
                           aria-pressed={active}
-                          className={`h-10 px-3 font-body-md text-[14px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#A68966] sm:h-11 sm:text-[17px] ${
+                          className={`h-11 rounded-xl border px-3 font-body-md text-[14px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#d9b780] sm:text-[16px] ${
                             active
-                              ? 'bg-[#1b1c1c] text-white'
-                              : 'bg-[#f4f0ea] text-[#1b1c1c] hover:bg-[#e7dfd5]'
+                              ? 'border-[#d9b780] bg-[#d9b780]/20 text-white'
+                              : 'border-white/20 bg-white/5 text-white/80 hover:bg-white/10'
                           }`}
                         >
                           {tab}
@@ -159,24 +164,29 @@ export function Hero() {
               </AnimatePresence>
             </div>
 
-            <div className="grid gap-px bg-[#d7d1c8] sm:grid-cols-[1fr_180px]">
-              <input
-                type="text"
-                value={searchArea}
-                onChange={e => setSearchArea(e.target.value)}
-                placeholder="Select location(s)"
-                className="h-12 w-full rounded-none border-0 bg-white px-5 font-body-md text-[15px] font-semibold text-[#1b1c1c] placeholder:text-[#1b1c1c] focus:outline-none focus:ring-2 focus:ring-[#A68966] sm:h-[52px] sm:text-[16px]"
-              />
+            <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
+              <label className="flex h-[54px] items-center gap-3 rounded-xl border border-white/30 bg-black/15 px-4 text-white/65 transition-colors focus-within:border-[#d9b780]">
+                <span className="material-symbols-outlined text-[#d9b780]" style={{ fontSize: 22 }}>location_on</span>
+                <input
+                  type="text"
+                  value={searchArea}
+                  onChange={e => setSearchArea(e.target.value)}
+                  placeholder="Select location(s)"
+                  className="h-full min-w-0 flex-1 border-0 bg-transparent font-body-md text-[16px] font-medium text-white placeholder:text-white/60 focus:outline-none"
+                />
+                <span className="material-symbols-outlined" style={{ fontSize: 20 }}>keyboard_arrow_down</span>
+              </label>
               <button
                 type="submit"
                 disabled={!canSearch}
                 aria-describedby={!canSearch ? 'search-requirements' : undefined}
-                className="h-12 bg-[#A68966] px-7 font-body-md text-[16px] font-semibold text-white transition-colors hover:bg-[#8a6e4e] disabled:cursor-not-allowed disabled:bg-[#b7aa9b] disabled:text-white/75 sm:h-[52px]"
+                className="flex h-[54px] items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#ddc08e] to-[#a98451] px-7 font-body-md text-[17px] font-semibold text-white shadow-[0_8px_20px_rgba(191,151,92,0.25)] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-none disabled:bg-white/15 disabled:text-white/45 disabled:shadow-none sm:text-[18px]"
               >
+                <span className="material-symbols-outlined" style={{ fontSize: 23 }}>search</span>
                 Search
               </button>
             </div>
-            {!canSearch && <p id="search-requirements" className="bg-white px-5 py-2 text-left font-body-md text-[13px] text-[#655b50]">Select Buy or Rent, then choose a property category to search.</p>}
+            {!canSearch && <p id="search-requirements" className="pt-3 font-body-md text-[13px] text-white/55">Choose Buy or Rent, then select a property category to continue.</p>}
           </div>
         </motion.form>
 
