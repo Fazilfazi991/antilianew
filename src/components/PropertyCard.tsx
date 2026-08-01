@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { Property } from '@/lib/types';
 import { formatPrice, getPrimaryImage } from '@/lib/utils';
 import { getPropertyCategory, getTransactionType, transactionLabel } from '@/lib/propertyTaxonomy';
+import { Mail, Phone, Share2 } from 'lucide-react';
 
 interface PropertyCardProps {
   property: Property;
@@ -52,6 +53,11 @@ export function PropertyCard({ property, index = 0 }: PropertyCardProps) {
     if (dotIndex === activeImage) return;
     setSlideDirection(dotIndex > activeImage ? 1 : -1);
     setActiveImage(dotIndex);
+  }
+  async function shareProperty() {
+    const url = `${window.location.origin}/properties/${property.slug}`;
+    if (navigator.share) await navigator.share({ title: property.title, url });
+    else await navigator.clipboard?.writeText(url);
   }
 
   return (
@@ -139,6 +145,12 @@ export function PropertyCard({ property, index = 0 }: PropertyCardProps) {
           <span className="material-symbols-outlined shrink-0 text-outline" style={{ fontSize: 17 }}>location_on</span>
           {property.area}, {property.location}
         </p>
+
+        <div className="mb-3 flex items-center gap-2" aria-label="Property contact actions">
+          <button type="button" onClick={() => void shareProperty()} aria-label={`Share ${property.title}`} title="Share property" className="rounded-full border border-[#d9b780]/50 p-2 text-[#735a3a] transition-colors hover:bg-[#f5ead3]"><Share2 className="size-4" /></button>
+          <a href="tel:+97470900064" aria-label={`Call about ${property.title}`} title="Call Antilia" className="rounded-full border border-[#d9b780]/50 p-2 text-[#735a3a] transition-colors hover:bg-[#f5ead3]"><Phone className="size-4" /></a>
+          <a href={`mailto:info@antiliarealestate.com?subject=${encodeURIComponent(`Enquiry: ${property.title}`)}`} aria-label={`Email about ${property.title}`} title="Email Antilia" className="rounded-full border border-[#d9b780]/50 p-2 text-[#735a3a] transition-colors hover:bg-[#f5ead3]"><Mail className="size-4" /></a>
+        </div>
 
         <div className="mt-auto flex h-9 items-center gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <span className="inline-flex h-9 shrink-0 items-center rounded-full bg-primary px-3 font-body-md text-[13px] leading-none text-on-primary">

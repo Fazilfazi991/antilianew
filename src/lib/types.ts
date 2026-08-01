@@ -12,7 +12,19 @@ export type PropertyType =
   | 'compound'
   | 'shop'
   | 'office'
-  | 'warehouse';
+  | 'warehouse'
+  | 'residential-land'
+  | 'showroom'
+  | 'business-centre'
+  | 'restaurant-space'
+  | 'commercial-building'
+  | 'commercial-land'
+  | 'factory'
+  | 'workshop'
+  | 'labour-accommodation'
+  | 'industrial-land'
+  | 'logistics-facility'
+  | 'cold-storage';
 
 export type Furnishing = 'furnished' | 'unfurnished' | 'semi-furnished';
 

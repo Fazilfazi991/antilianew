@@ -6,7 +6,7 @@ export function useFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const filters: PropertyFilters = {
-    transactionType: (searchParams.get('transactionType') as PropertyFilters['transactionType']) || (searchParams.get('category') === 'buy' || searchParams.get('purpose') === 'sale' ? 'buy' : searchParams.get('category') === 'rent' ? 'rent' : DEFAULT_FILTERS.transactionType),
+    transactionType: (searchParams.get('transactionType') === 'sale' ? 'buy' : searchParams.get('transactionType') as PropertyFilters['transactionType']) || (searchParams.get('category') === 'buy' || searchParams.get('purpose') === 'sale' ? 'buy' : searchParams.get('category') === 'rent' ? 'rent' : DEFAULT_FILTERS.transactionType),
     category: (searchParams.get('category') as PropertyFilters['category']) || (searchParams.get('segment') as PropertyFilters['category']) || DEFAULT_FILTERS.category,
     type: (searchParams.get('type') as PropertyFilters['type']) || DEFAULT_FILTERS.type,
     location: searchParams.get('location') || DEFAULT_FILTERS.location,
@@ -34,6 +34,7 @@ export function useFilters() {
       if (key === 'transactionType' || key === 'category') {
         next.delete('segment');
         next.delete('purpose');
+        next.delete('sale');
       }
       return next;
     });

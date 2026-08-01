@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, TrendingUp, Home, PlusCircle, ClipboardList, Loader2, CheckCircle, Save, Trash2, UserCheck, MapPin, UserPlus } from 'lucide-react';
 import { useProperties } from '@/hooks/useProperties';
+import { getTransactionType } from '@/lib/propertyTaxonomy';
 import {
   fetchPendingCount,
   fetchAllUsers,
@@ -66,8 +67,8 @@ export function AdminDashboardPage() {
     const available = properties.filter(p => p.status === 'available').length;
     const rented = properties.filter(p => p.status === 'rented').length;
     const sold = properties.filter(p => p.status === 'sold').length;
-    const rent = properties.filter(p => p.category === 'rent').length;
-    const buy = properties.filter(p => p.category === 'buy').length;
+    const rent = properties.filter(p => getTransactionType(p) === 'rent').length;
+    const buy = properties.filter(p => getTransactionType(p) === 'buy').length;
     const commercial = properties.filter(p => p.category === 'commercial').length;
     return { total: properties.length, available, rented, sold, rent, buy, commercial };
   }, [properties]);

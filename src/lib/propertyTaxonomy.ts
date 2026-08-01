@@ -12,9 +12,9 @@ export const PROPERTY_CATEGORIES = [
 ] as const;
 
 export const PROPERTY_TYPES_BY_CATEGORY: Record<PropertyCategory, PropertyType[]> = {
-  residential: ['apartment', 'villa', 'townhouse', 'studio', 'penthouse', 'duplex', 'compound'],
-  commercial: ['shop', 'office'],
-  industrial: ['warehouse'],
+  residential: ['apartment', 'villa', 'townhouse', 'studio', 'penthouse', 'duplex', 'compound', 'residential-land'],
+  commercial: ['shop', 'office', 'showroom', 'business-centre', 'restaurant-space', 'commercial-building', 'commercial-land'],
+  industrial: ['warehouse', 'factory', 'workshop', 'labour-accommodation', 'industrial-land', 'logistics-facility', 'cold-storage'],
 };
 
 export function getTransactionType(property: Pick<Property, 'transaction_type' | 'category'>): TransactionType {

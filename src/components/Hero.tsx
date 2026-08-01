@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { AnimatePresence, useReducedMotion, motion } from "motion/react";
 import { Link, useNavigate } from "react-router-dom";
+import { Building2, Factory, Home, KeyRound, Search, ShoppingBag } from 'lucide-react';
+import { LocationCombobox } from '@/components/LocationCombobox';
+import { useCities } from '@/hooks/useCities';
 
 const HEADLINE = "Curated Excellence";
 const TRANSACTION_TABS = ['Buy', 'Rent'] as const;
@@ -15,6 +18,7 @@ export function Hero() {
   const [transaction, setTransaction] = useState<TransactionTab | null>(null);
   const [segment, setSegment] = useState<SegmentTab | null>(null);
   const [searchArea, setSearchArea] = useState('');
+  const { cities } = useCities();
 
   const wordVariants = {
     hidden: reduced
@@ -49,6 +53,7 @@ export function Hero() {
 
   const canSearch = transaction !== null && segment !== null;
 
+  const segmentIcons = { Residential: Home, Commercial: Building2, Industrial: Factory };
   return (
     <section className="relative min-h-[86dvh] w-full overflow-hidden">
       <video
@@ -125,7 +130,7 @@ export function Hero() {
                           : 'text-white/90 hover:bg-white/10'
                       }`}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{tab === 'Buy' ? 'business_center' : 'key'}</span>
+                      {tab === 'Buy' ? <ShoppingBag aria-hidden="true" className="size-5" /> : <KeyRound aria-hidden="true" className="size-5" />}
                       {tab}
                     </button>
                   );
@@ -143,19 +148,20 @@ export function Hero() {
                   >
                     {SEGMENT_TABS.map(tab => {
                       const active = segment === tab;
+                      const Icon = segmentIcons[tab];
                       return (
                         <button
                           key={tab}
                           type="button"
                           onClick={() => setSegment(tab)}
                           aria-pressed={active}
-                          className={`h-11 rounded-xl border px-3 font-body-md text-[14px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#d9b780] sm:text-[16px] ${
+                          className={`flex h-11 items-center justify-center gap-2 rounded-xl border px-3 font-body-md text-[14px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#d9b780] sm:text-[16px] ${
                             active
                               ? 'border-[#d9b780] bg-[#d9b780]/20 text-white'
                               : 'border-white/20 bg-white/5 text-white/80 hover:bg-white/10'
                           }`}
                         >
-                          {tab}
+                          <Icon aria-hidden="true" className="size-4" /> {tab}
                         </button>
                       );
                     })}
@@ -165,24 +171,15 @@ export function Hero() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
-              <label className="flex h-[54px] items-center gap-3 rounded-xl border border-white/30 bg-black/15 px-4 text-white/65 transition-colors focus-within:border-[#d9b780]">
-                <span className="material-symbols-outlined text-[#d9b780]" style={{ fontSize: 22 }}>location_on</span>
-                <input
-                  type="text"
-                  value={searchArea}
-                  onChange={e => setSearchArea(e.target.value)}
-                  placeholder="Select location(s)"
-                  className="h-full min-w-0 flex-1 border-0 bg-transparent font-body-md text-[16px] font-medium text-white placeholder:text-white/60 focus:outline-none"
-                />
-                <span className="material-symbols-outlined" style={{ fontSize: 20 }}>keyboard_arrow_down</span>
-              </label>
+              <LocationCombobox locations={cities} value={searchArea} onChange={setSearchArea} />
               <button
                 type="submit"
                 disabled={!canSearch}
+                aria-disabled={!canSearch}
                 aria-describedby={!canSearch ? 'search-requirements' : undefined}
                 className="flex h-[54px] items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#ddc08e] to-[#a98451] px-7 font-body-md text-[17px] font-semibold text-white shadow-[0_8px_20px_rgba(191,151,92,0.25)] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-none disabled:bg-white/15 disabled:text-white/45 disabled:shadow-none sm:text-[18px]"
               >
-                <span className="material-symbols-outlined" style={{ fontSize: 23 }}>search</span>
+                <Search aria-hidden="true" className="size-5" />
                 Search
               </button>
             </div>
