@@ -4,6 +4,8 @@ import { fetchPropertyBySlug } from '@/lib/queries/properties';
 import { formatPrice, getPropertyWhatsAppURL } from '@/lib/utils';
 import type { Property, PropertyImage } from '@/lib/types';
 import { getPropertyCategory, getTransactionType, transactionLabel } from '@/lib/propertyTaxonomy';
+import { getPublicPropertyMediaUrl } from '@/lib/propertyMediaStorage';
+import { Play } from 'lucide-react';
 
 const TYPE_LABELS: Record<string, string> = {
   apartment: 'Apartment', villa: 'Villa', townhouse: 'Townhouse',
@@ -83,6 +85,10 @@ export function PropertyDetailPage() {
     : [{ url: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200', alt: property.title, order: 0, is_primary: true }];
 
   const mosaicImages = getMosaicImages(images);
+  const videoItems = (property.media ?? []).filter(media => media.media_type === 'video').map(media => ({
+    kind: 'video' as const, url: getPublicPropertyMediaUrl(media.storage_bucket, media.storage_path), alt: media.file_name ?? `${property.title} video tour`, poster: images[0]?.url,
+  }));
+  const galleryItems = [...images.map(image => ({ kind: 'image' as const, url: image.url, alt: image.alt })), ...videoItems];
   const category = getPropertyCategory(property);
   const isResidential = category === 'residential';
   const referenceNumber = getReferenceNumber(property);
@@ -151,13 +157,13 @@ export function PropertyDetailPage() {
             </div>
           </div>
 
-          {images.length > 1 && (
+          {galleryItems.length > 1 && (
             <button
               type="button"
               onClick={() => setGalleryOpen(true)}
               className="absolute bottom-5 right-5 inline-flex h-12 items-center gap-2 rounded-full bg-primary/80 px-5 font-body-md text-body-md font-semibold text-on-primary shadow-lg backdrop-blur-sm transition-colors hover:bg-primary"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 22 }}>photo_library</span>
+              {videoItems.length ? <Play className="size-5" /> : <span className="material-symbols-outlined" style={{ fontSize: 22 }}>photo_library</span>}
               View Gallery
             </button>
           )}
@@ -275,7 +281,7 @@ export function PropertyDetailPage() {
           <div className="mx-auto flex h-full max-w-[1440px] flex-col">
             <div className="mb-4 flex items-center justify-between gap-4">
               <span className="font-body-md text-body-md font-semibold">
-                {activeImage + 1} / {images.length}
+                {activeImage + 1} / {galleryItems.length}
               </span>
               <button
                 type="button"
@@ -288,26 +294,22 @@ export function PropertyDetailPage() {
             </div>
 
             <div className="min-h-0 flex-1 overflow-hidden rounded-[18px] bg-on-primary/5">
-              <img
-                src={images[activeImage]?.url}
-                alt={images[activeImage]?.alt ?? property.title}
-                className="h-full w-full object-contain"
-              />
+              {galleryItems[activeImage]?.kind === 'video' ? <video key={galleryItems[activeImage].url} controls playsInline preload="metadata" poster={galleryItems[activeImage].poster} className="h-full w-full object-contain" src={galleryItems[activeImage].url} aria-label={`Video tour: ${galleryItems[activeImage].alt}`} /> : <img src={galleryItems[activeImage]?.url} alt={galleryItems[activeImage]?.alt ?? property.title} className="h-full w-full object-contain" />}
             </div>
 
-            {images.length > 1 && (
+            {galleryItems.length > 1 && (
               <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
-                {images.map((image, i) => (
+                {galleryItems.map((item, i) => (
                   <button
-                    key={`${image.url}-thumb-${i}`}
+                    key={`${item.url}-thumb-${i}`}
                     type="button"
                     onClick={() => setActiveImage(i)}
                     className={`h-16 w-24 shrink-0 overflow-hidden rounded-md border transition-opacity sm:h-20 sm:w-32 ${
                       i === activeImage ? 'border-on-primary opacity-100' : 'border-on-primary/20 opacity-55 hover:opacity-85'
                     }`}
-                    aria-label={`Show gallery image ${i + 1}`}
+                    aria-label={`Show gallery ${item.kind} ${i + 1}`}
                   >
-                    <img src={image.url} alt={image.alt ?? property.title} className="h-full w-full object-cover" />
+                    {item.kind === 'video' ? <div className="relative h-full w-full"><img src={item.poster} alt="" className="h-full w-full object-cover" /><span className="absolute inset-0 flex items-center justify-center bg-black/35"><Play className="size-6 fill-white text-white" /></span></div> : <img src={item.url} alt={item.alt ?? property.title} className="h-full w-full object-cover" />}
                   </button>
                 ))}
               </div>
@@ -318,7 +320,6 @@ export function PropertyDetailPage() {
     </div>
   );
 }
-
 
 
 

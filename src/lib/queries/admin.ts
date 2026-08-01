@@ -1,5 +1,7 @@
 import { supabase } from '../supabase';
 import type { Property, Profile, ProfileRole, SiteSetting, City } from '../types';
+import type { PropertyMedia } from '../types';
+import { propertyMediaStorage } from '../propertyMediaStorage';
 
 export async function adminSignIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -205,4 +207,34 @@ export async function uploadPropertyImage(
   if (error) throw error;
   const { data } = supabase.storage.from('property-images').getPublicUrl(path);
   return data.publicUrl;
+}
+
+export async function uploadPropertyVideo(propertyId: string, file: File, onProgress?: (progress: number) => void): Promise<PropertyMedia> {
+  const stored = await propertyMediaStorage.upload({ propertyId, file, mediaType: 'video', onProgress });
+  const { data, error } = await supabase.from('property_media').insert({
+    property_id: propertyId, media_type: 'video', storage_provider: stored.provider, storage_bucket: stored.bucket,
+    storage_path: stored.path, mime_type: file.type, file_name: file.name, file_size: file.size,
+  }).select().single();
+  if (error) {
+    await propertyMediaStorage.delete({ bucket: stored.bucket, path: stored.path }).catch(() => undefined);
+    throw error;
+  }
+  return data as PropertyMedia;
+}
+
+export async function fetchPropertyMedia(propertyId: string): Promise<PropertyMedia[]> {
+  const { data, error } = await supabase.from('property_media').select('*').eq('property_id', propertyId).order('sort_order');
+  if (error) throw error;
+  return (data ?? []) as PropertyMedia[];
+}
+
+export async function deletePropertyMedia(media: PropertyMedia): Promise<void> {
+  const { error } = await supabase.from('property_media').delete().eq('id', media.id);
+  if (error) throw error;
+  try { await propertyMediaStorage.delete({ bucket: media.storage_bucket, path: media.storage_path }); }
+  catch (storageError) {
+    // Restore metadata so the object remains manageable rather than silently orphaning it.
+    await supabase.from('property_media').insert(media);
+    throw storageError;
+  }
 }

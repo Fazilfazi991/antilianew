@@ -5,11 +5,11 @@ import type { Property } from '../types';
 export async function fetchProperties(): Promise<Property[]> {
   const { data, error } = await supabase
     .from('properties')
-    .select('*')
+    .select('*, property_media(*)')
     .eq('listing_status', 'approved')
     .order('created_at', { ascending: false });
   if (error) return LOCAL_PROPERTIES;
-  return mergeLocalProperties((data ?? []) as Property[]);
+  return mergeLocalProperties((data ?? []).map((property) => ({ ...property, media: property.property_media ?? [] })) as Property[]);
 }
 
 export async function fetchPropertyBySlug(slug: string): Promise<Property | null> {
@@ -18,12 +18,12 @@ export async function fetchPropertyBySlug(slug: string): Promise<Property | null
 
   const { data, error } = await supabase
     .from('properties')
-    .select('*')
+    .select('*, property_media(*)')
     .eq('slug', slug)
     .eq('listing_status', 'approved')
     .single();
   if (error) return null;
-  return data as Property;
+  return { ...data, media: data.property_media ?? [] } as Property;
 }
 
 export async function fetchFeaturedProperties(limit = 6): Promise<Property[]> {

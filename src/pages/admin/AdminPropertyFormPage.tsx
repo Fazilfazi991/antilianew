@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Upload, X, Star } from 'lucide-react';
-import { createProperty, updateProperty, uploadPropertyImage } from '@/lib/queries/admin';
+import { ArrowLeft, Loader2, Upload, X, Star, Video, Trash2 } from 'lucide-react';
+import { createProperty, deletePropertyMedia, fetchPropertyMedia, updateProperty, uploadPropertyImage, uploadPropertyVideo } from '@/lib/queries/admin';
 import { fetchProperties } from '@/lib/queries/properties';
 import { slugify } from '@/lib/utils';
 import { useCities } from '@/hooks/useCities';
 import { PROPERTY_CATEGORIES, PROPERTY_TYPES_BY_CATEGORY, TRANSACTION_TYPES } from '@/lib/propertyTaxonomy';
-import type { Property, PropertyCategory, PropertyType, Furnishing, PropertyStatus, PropertyImage, TransactionType } from '@/lib/types';
+import type { Property, PropertyCategory, PropertyType, Furnishing, PropertyStatus, PropertyImage, PropertyMedia, TransactionType } from '@/lib/types';
+import { formatMediaSize, PROPERTY_MEDIA_LIMITS, validatePropertyVideo } from '@/lib/propertyMedia';
+import { getPublicPropertyMediaUrl } from '@/lib/propertyMediaStorage';
 
 type FormData = Omit<Property, 'id' | 'created_at' | 'updated_at'>;
 
@@ -80,17 +82,23 @@ export function AdminPropertyFormPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [videoMedia, setVideoMedia] = useState<PropertyMedia[]>([]);
+  const [queuedVideos, setQueuedVideos] = useState<File[]>([]);
+  const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
+  const [uploadingVideos, setUploadingVideos] = useState(false);
   const [amenityInput, setAmenityInput] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isEdit || !id) return;
-    fetchProperties().then(list => {
+    Promise.all([fetchProperties(), fetchPropertyMedia(id)]).then(([list, media]) => {
       const found = list.find(p => p.id === id);
       if (found) {
         const { id: _id, created_at: _c, updated_at: _u, ...rest } = found;
         setForm(rest);
       }
+      setVideoMedia(media.filter(item => item.media_type === 'video'));
       setLoading(false);
     });
   }, [id, isEdit]);
@@ -147,6 +155,38 @@ export function AdminPropertyFormPage() {
     });
   }
 
+  function queueVideos(files: FileList | null) {
+    if (!files?.length) return;
+    const selected = Array.from(files);
+    const errors = selected.map(validatePropertyVideo).filter(Boolean);
+    if (errors.length) { setError(errors[0] ?? 'Invalid video'); return; }
+    if (videoMedia.length + queuedVideos.length + selected.length > PROPERTY_MEDIA_LIMITS.maxVideos) {
+      setError(`A property can have up to ${PROPERTY_MEDIA_LIMITS.maxVideos} videos.`); return;
+    }
+    setQueuedVideos(prev => [...prev, ...selected]);
+    setError('');
+  }
+
+  async function removeVideo(media: PropertyMedia) {
+    if (!window.confirm(`Remove ${media.file_name ?? 'this video'}?`)) return;
+    try { await deletePropertyMedia(media); setVideoMedia(prev => prev.filter(item => item.id !== media.id)); }
+    catch (e: unknown) { setError(e instanceof Error ? e.message : 'Video removal failed. Please retry.'); }
+  }
+
+  async function uploadQueuedVideos(propertyId: string) {
+    if (!queuedVideos.length) return;
+    setUploadingVideos(true);
+    const uploaded: PropertyMedia[] = [];
+    try {
+      for (const file of queuedVideos) {
+        const key = `${file.name}-${file.lastModified}`;
+        uploaded.push(await uploadPropertyVideo(propertyId, file, progress => setVideoProgress(prev => ({ ...prev, [key]: progress }))));
+      }
+      setVideoMedia(prev => [...prev, ...uploaded]);
+      setQueuedVideos([]);
+    } finally { setUploadingVideos(false); }
+  }
+
   function setPrimary(index: number) {
     setForm(prev => ({
       ...prev,
@@ -169,8 +209,10 @@ export function AdminPropertyFormPage() {
     try {
       if (isEdit && id) {
         await updateProperty(id, form);
+        await uploadQueuedVideos(id);
       } else {
-        await createProperty(form);
+        const property = await createProperty(form);
+        await uploadQueuedVideos(property.id);
       }
       navigate('/admin/properties');
     } catch (e: unknown) {
@@ -446,6 +488,18 @@ export function AdminPropertyFormPage() {
           )}
         </Section>
 
+        <Section title="Property Videos">
+          <p className="font-body-md text-sm text-on-surface-variant">Upload property tours or walkthroughs in MP4, MOV, M4V or WebM format. Maximum {PROPERTY_MEDIA_LIMITS.maxVideos} videos, up to {formatMediaSize(PROPERTY_MEDIA_LIMITS.maxVideoBytes)} each.</p>
+          <button type="button" onClick={() => videoRef.current?.click()} disabled={uploadingVideos} className="flex items-center gap-2.5 px-5 py-3 border border-dashed border-outline-variant hover:border-primary font-label-caps text-label-caps text-on-surface-variant hover:text-primary uppercase tracking-[0.08em] transition-colors disabled:opacity-50">
+            {uploadingVideos ? <Loader2 className="size-4 animate-spin" /> : <Video className="size-4" />}{uploadingVideos ? 'Uploading videos…' : 'Browse videos'}
+          </button>
+          <input ref={videoRef} type="file" accept="video/mp4,video/quicktime,video/x-m4v,video/webm,.mp4,.mov,.m4v,.webm" multiple className="hidden" onChange={e => queueVideos(e.target.files)} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            {videoMedia.map(media => <div key={media.id} className="rounded-lg border border-surface-variant p-3"><video controls preload="metadata" playsInline src={getPublicPropertyMediaUrl(media.storage_bucket, media.storage_path)} className="aspect-video w-full rounded bg-black" /><div className="mt-2 flex items-center justify-between gap-2 text-xs text-on-surface-variant"><span className="truncate">{media.file_name}</span><button type="button" onClick={() => void removeVideo(media)} aria-label={`Remove ${media.file_name ?? 'video'}`} className="text-error"><Trash2 className="size-4" /></button></div></div>)}
+            {queuedVideos.map((file, index) => { const key = `${file.name}-${file.lastModified}`; return <div key={key} className="rounded-lg border border-[#d9b780]/40 p-3"><video controls preload="metadata" playsInline src={URL.createObjectURL(file)} className="aspect-video w-full rounded bg-black" /><div className="mt-2 flex items-center justify-between gap-2 text-xs text-on-surface-variant"><span className="truncate">{file.name} · {formatMediaSize(file.size)}</span><button type="button" onClick={() => setQueuedVideos(prev => prev.filter((_, i) => i !== index))} aria-label={`Remove ${file.name}`} className="text-error"><X className="size-4" /></button></div>{uploadingVideos && <div className="mt-2 h-1 rounded bg-surface-container"><div className="h-1 rounded bg-secondary" style={{ width: `${videoProgress[key] ?? 0}%` }} /></div>}</div>; })}
+          </div>
+        </Section>
+
         {error && (
           <p className="font-body-md text-body-md text-error border-b border-error pb-3">
             {error}
@@ -455,7 +509,7 @@ export function AdminPropertyFormPage() {
         <div className="flex gap-4 pt-2">
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploadingVideos}
             className="flex items-center gap-2 px-8 py-3.5 bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-[0.1em] hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving && <Loader2 className="size-4 animate-spin" />}

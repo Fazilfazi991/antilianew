@@ -41,6 +41,29 @@ export interface PropertyImage {
   is_primary: boolean;
 }
 
+export type PropertyMediaType = 'image' | 'video';
+export type StorageProvider = 'supabase' | 'firebase';
+
+export interface PropertyMedia {
+  id: string;
+  property_id: string;
+  media_type: PropertyMediaType;
+  storage_provider: StorageProvider;
+  storage_bucket: string;
+  storage_path: string;
+  mime_type: string | null;
+  file_name: string | null;
+  file_size: number | null;
+  sort_order: number;
+  is_primary: boolean;
+  thumbnail_path: string | null;
+  duration_seconds: number | null;
+  width: number | null;
+  height: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Property {
   id: string;
   slug: string;
@@ -65,6 +88,8 @@ export interface Property {
   featured: boolean;
   amenities: string[];
   images: PropertyImage[];
+  /** Unified media records. Legacy images remain in `images` while media migration is gradual. */
+  media?: PropertyMedia[];
   seo_title: string | null;
   seo_description: string | null;
   owner_id: string | null;

@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { Property } from '@/lib/types';
 import { formatPrice, getPrimaryImage } from '@/lib/utils';
 import { getPropertyCategory, getTransactionType, transactionLabel } from '@/lib/propertyTaxonomy';
-import { Mail, Phone, Share2 } from 'lucide-react';
+import { Mail, Phone, Play, Share2 } from 'lucide-react';
 
 interface PropertyCardProps {
   property: Property;
@@ -38,6 +38,7 @@ export function PropertyCard({ property, index = 0 }: PropertyCardProps) {
   const isResidential = category === 'residential';
   const reduced = useReducedMotion();
   const hasSlider = images.length > 1;
+  const hasVideo = property.media?.some(media => media.media_type === 'video') ?? false;
 
   function showPrevious() {
     setSlideDirection(-1);
@@ -129,6 +130,7 @@ export function PropertyCard({ property, index = 0 }: PropertyCardProps) {
             </div>
           </>
         )}
+        {hasVideo && <Link to={`/properties/${property.slug}?media=video`} className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-[#0b1d36]/85 px-2.5 py-1.5 text-xs font-semibold text-white backdrop-blur" aria-label={`Watch video tour for ${property.title}`}><Play className="size-3 fill-current" /> Video Tour</Link>}
       </div>
 
       <div className="flex flex-1 flex-col pt-3.5">
