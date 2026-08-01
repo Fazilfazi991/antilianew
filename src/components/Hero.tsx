@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Building2, Factory, Home, KeyRound, Search, ShoppingBag } from 'lucide-react';
 import { LocationCombobox } from '@/components/LocationCombobox';
 import { useCities } from '@/hooks/useCities';
+import { useProperties } from '@/hooks/useProperties';
+import { extractLocations } from '@/lib/utils';
 
 const HEADLINE = "Curated Excellence";
 const TRANSACTION_TABS = ['Buy', 'Rent'] as const;
@@ -18,7 +20,10 @@ export function Hero() {
   const [transaction, setTransaction] = useState<TransactionTab | null>(null);
   const [segment, setSegment] = useState<SegmentTab | null>(null);
   const [searchArea, setSearchArea] = useState('');
+  const [locationOpen, setLocationOpen] = useState(false);
   const { cities } = useCities();
+  const { properties } = useProperties();
+  const availableLocations = [...new Set([...cities, ...extractLocations(properties)])];
 
   const wordVariants = {
     hidden: reduced
@@ -109,7 +114,7 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: words.length * 0.1 + 0.2, duration: 0.6 }}
         >
-          <div className="overflow-hidden rounded-[22px] border border-white/30 bg-[#17191f]/80 p-4 text-left shadow-[0_24px_70px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-5">
+          <div className="overflow-visible rounded-[22px] border border-white/30 bg-[#17191f]/80 p-4 text-left shadow-[0_24px_70px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-5">
             <p className="mb-3 flex items-center gap-2 font-body-md text-[15px] font-medium text-[#d9b780] sm:text-[16px]">
               <span className="material-symbols-outlined text-[#d9b780]" style={{ fontSize: 22 }}>flare</span>
               Start with Buy or Rent
@@ -171,7 +176,7 @@ export function Hero() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
-              <LocationCombobox locations={cities} value={searchArea} onChange={setSearchArea} />
+              <LocationCombobox locations={availableLocations} value={searchArea} onChange={setSearchArea} onOpenChange={setLocationOpen} />
               <button
                 type="submit"
                 disabled={!canSearch}
@@ -183,7 +188,7 @@ export function Hero() {
                 Search
               </button>
             </div>
-            {!canSearch && <p id="search-requirements" className="pt-3 font-body-md text-[13px] text-white/55">Choose Buy or Rent, then select a property category to continue.</p>}
+            {!canSearch && !locationOpen && <p id="search-requirements" className="pt-3 font-body-md text-[13px] text-white/55">Choose Buy or Rent, then select a property category to continue.</p>}
           </div>
         </motion.form>
 
