@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { fetchFeaturedProperties } from "@/lib/queries/properties";
-import { formatPrice, getPrimaryImage, getPropertyWhatsAppURL } from "@/lib/utils";
+import { formatPrice, getPrimaryImage } from "@/lib/utils";
 import type { Property } from "@/lib/types";
+import { PropertyCardActions } from '@/components/PropertyCardActions';
 
 function fadeUp(reduced: boolean | null, delay = 0) {
   return {
@@ -68,17 +69,8 @@ function PropertyCard({
             <span className="material-symbols-outlined" style={{ fontSize: 15 }}>square_foot</span>
             {property.area_sqft.toLocaleString()} sqft
           </span>
-          <motion.a
-            href={getPropertyWhatsAppURL(property)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-auto flex items-center gap-1.5 font-label-caps text-label-caps text-primary hover:text-secondary uppercase tracking-[0.08em] transition-colors"
-            whileHover={reduced ? {} : { x: 3 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-          >
-            Enquire <span className="material-symbols-outlined" style={{ fontSize: 14 }}>arrow_forward</span>
-          </motion.a>
         </div>
+        <div className="mt-3"><PropertyCardActions property={property} /></div>
       </div>
     </motion.article>
   );
@@ -154,4 +146,3 @@ export function FeaturedProperties() {
     </section>
   );
 }
-

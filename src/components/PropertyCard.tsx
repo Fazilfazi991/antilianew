@@ -2,10 +2,10 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { Property } from '@/lib/types';
-import { formatPrice, getPrimaryImage, getPropertyCardWhatsAppURL, getPropertyWhatsAppShareURL } from '@/lib/utils';
-import { ANTILIA_CONTACT } from '@/lib/contact';
+import { formatPrice, getPrimaryImage } from '@/lib/utils';
+import { PropertyCardActions } from '@/components/PropertyCardActions';
 import { getPropertyCategory, getTransactionType, transactionLabel } from '@/lib/propertyTaxonomy';
-import { MessageCircle, Phone, Play, Share2 } from 'lucide-react';
+import { Play } from 'lucide-react';
 
 interface PropertyCardProps {
   property: Property;
@@ -143,11 +143,7 @@ export function PropertyCard({ property, index = 0 }: PropertyCardProps) {
           {property.area}, {property.location}
         </p>
 
-        <div className="mb-3 grid grid-cols-3 gap-2" aria-label="Property contact actions">
-          <a href={`tel:${ANTILIA_CONTACT.propertyCardCall}`} aria-label={`Call about ${property.title}`} className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-[#d9b780]/50 px-2 text-xs font-semibold text-[#735a3a] transition-colors hover:bg-[#f5ead3] focus:outline-none focus:ring-2 focus:ring-[#9e7b3d]"><Phone className="size-4" />Call</a>
-          <a href={getPropertyCardWhatsAppURL(property)} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp about ${property.title}`} className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-[#d9b780]/50 px-2 text-xs font-semibold text-[#735a3a] transition-colors hover:bg-[#f5ead3] focus:outline-none focus:ring-2 focus:ring-[#9e7b3d]"><MessageCircle className="size-4" />WhatsApp</a>
-          <a href={getPropertyWhatsAppShareURL(property)} target="_blank" rel="noopener noreferrer" aria-label={`Share ${property.title} on WhatsApp`} className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-[#d9b780]/50 px-2 text-xs font-semibold text-[#735a3a] transition-colors hover:bg-[#f5ead3] focus:outline-none focus:ring-2 focus:ring-[#9e7b3d]"><Share2 className="size-4" />Share</a>
-        </div>
+        <div className="mb-3"><PropertyCardActions property={property} /></div>
 
         <div className="mt-auto flex h-9 items-center gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <span className="inline-flex h-9 shrink-0 items-center rounded-full bg-primary px-3 font-body-md text-[13px] leading-none text-on-primary">
