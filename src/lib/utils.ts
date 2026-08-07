@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { Property } from './types';
+import { ANTILIA_CONTACT, toWhatsAppNumber } from './contact';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -22,9 +23,24 @@ export function slugify(text: string): string {
 }
 
 export function getWhatsAppURL(message?: string): string {
-  const number = import.meta.env.VITE_WHATSAPP_NUMBER || '97412345678';
+  const number = ANTILIA_CONTACT.whatsapp;
   const text = message || 'Hello Antilia Real Estate, I would like to make an enquiry.';
-  return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
+  return `https://wa.me/${toWhatsAppNumber(number)}?text=${encodeURIComponent(text)}`;
+}
+
+function propertyUrl(property: Property): string {
+  const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
+  return `${siteUrl}/properties/${property.slug}`;
+}
+
+export function getPropertyCardWhatsAppURL(property: Property): string {
+  const message = `Hi Antilia Real Estate, I am interested in ${property.title}. ${formatPrice(property.price, property.currency, property.price_period)} ${propertyUrl(property)}`;
+  return `https://wa.me/${toWhatsAppNumber(ANTILIA_CONTACT.propertyCardWhatsapp)}?text=${encodeURIComponent(message)}`;
+}
+
+export function getPropertyWhatsAppShareURL(property: Property): string {
+  const message = `Check out this property from Antilia Real Estate:\n\n${property.title}\n${formatPrice(property.price, property.currency, property.price_period)}\n${propertyUrl(property)}`;
+  return `https://wa.me/${toWhatsAppNumber(ANTILIA_CONTACT.propertyCardWhatsapp)}?text=${encodeURIComponent(message)}`;
 }
 
 export function getPropertyWhatsAppURL(property: Property): string {

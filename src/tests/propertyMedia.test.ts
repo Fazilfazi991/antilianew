@@ -5,6 +5,7 @@ describe('property video validation', () => {
   it('accepts supported video containers with matching MIME types', () => {
     const file = new File(['video'], 'living-room-tour.mp4', { type: 'video/mp4' });
     expect(validatePropertyVideo(file)).toBeNull();
+    expect(validatePropertyVideo(new File(['video'], 'living-room-tour.mov', { type: 'video/quicktime' }))).toBeNull();
   });
 
   it('rejects unsupported formats and mismatched MIME types', () => {

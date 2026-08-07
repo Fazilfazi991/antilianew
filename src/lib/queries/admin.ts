@@ -1,7 +1,32 @@
 import { supabase } from '../supabase';
 import type { Property, Profile, ProfileRole, SiteSetting, City } from '../types';
 import type { PropertyMedia } from '../types';
-import { propertyMediaStorage } from '../propertyMediaStorage';
+import { propertyMediaStorage, type StoredPropertyMedia } from '../propertyMediaStorage';
+
+export type PropertyWriteData = Omit<Property, 'id' | 'created_at' | 'updated_at' | 'media'>;
+export type MediaOperationStage = 'validating' | 'uploading' | 'saving-media' | 'saving-property' | 'complete' | 'failed';
+
+export class PropertyVideoMetadataError extends Error {
+  readonly stage = 'saving-media' as const;
+  readonly stored: StoredPropertyMedia;
+  readonly file: File;
+  override readonly cause: unknown;
+  constructor(stored: StoredPropertyMedia, file: File, cause: unknown) {
+    super('Could not save video details. Please retry.');
+    this.name = 'PropertyVideoMetadataError';
+    this.stored = stored;
+    this.file = file;
+    this.cause = cause;
+  }
+}
+
+function toPropertyWriteData(data: PropertyWriteData): PropertyWriteData {
+  // Runtime guard: relation fields returned by Supabase must never be PATCHed to properties.
+  const property = { ...(data as PropertyWriteData & { media?: unknown; property_media?: unknown }) };
+  delete property.media;
+  delete property.property_media;
+  return property as PropertyWriteData;
+}
 
 export async function adminSignIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -20,11 +45,11 @@ export async function getSession() {
 }
 
 export async function createProperty(
-  data: Omit<Property, 'id' | 'created_at' | 'updated_at'>
+  data: PropertyWriteData
 ): Promise<Property> {
   const { data: result, error } = await supabase
     .from('properties')
-    .insert(data)
+    .insert(toPropertyWriteData(data))
     .select()
     .single();
   if (error) throw error;
@@ -33,11 +58,11 @@ export async function createProperty(
 
 export async function updateProperty(
   id: string,
-  data: Partial<Omit<Property, 'id' | 'created_at' | 'updated_at'>>
+  data: Partial<PropertyWriteData>
 ): Promise<Property> {
   const { data: result, error } = await supabase
     .from('properties')
-    .update({ ...data, updated_at: new Date().toISOString() })
+    .update({ ...toPropertyWriteData(data as PropertyWriteData), updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single();
@@ -209,17 +234,37 @@ export async function uploadPropertyImage(
   return data.publicUrl;
 }
 
-export async function uploadPropertyVideo(propertyId: string, file: File, onProgress?: (progress: number) => void): Promise<PropertyMedia> {
-  const stored = await propertyMediaStorage.upload({ propertyId, file, mediaType: 'video', onProgress });
+export async function savePropertyVideoMetadata(propertyId: string, file: File, stored: StoredPropertyMedia): Promise<PropertyMedia> {
   const { data, error } = await supabase.from('property_media').insert({
     property_id: propertyId, media_type: 'video', storage_provider: stored.provider, storage_bucket: stored.bucket,
     storage_path: stored.path, mime_type: file.type, file_name: file.name, file_size: file.size,
   }).select().single();
-  if (error) {
-    await propertyMediaStorage.delete({ bucket: stored.bucket, path: stored.path }).catch(() => undefined);
+  if (error) throw error;
+  return data as PropertyMedia;
+}
+
+export async function uploadPropertyVideo(propertyId: string, file: File, onProgress?: (progress: number) => void): Promise<PropertyMedia> {
+  const stored = await propertyMediaStorage.upload({ propertyId, file, mediaType: 'video', onProgress });
+  try {
+    return await savePropertyVideoMetadata(propertyId, file, stored);
+  } catch (error) {
+    // Keep the successfully uploaded object only long enough to retry metadata without a second large upload.
+    console.error('Property video save failed', { stage: 'saving-media', error });
+    throw new PropertyVideoMetadataError(stored, file, error);
+  }
+}
+
+export async function retryPropertyVideoMetadata(propertyId: string, file: File, stored: StoredPropertyMedia): Promise<PropertyMedia> {
+  try {
+    return await savePropertyVideoMetadata(propertyId, file, stored);
+  } catch (error) {
+    console.error('Property video save failed', { stage: 'saving-media', error });
     throw error;
   }
-  return data as PropertyMedia;
+}
+
+export async function cleanupUnlinkedPropertyVideo(stored: StoredPropertyMedia): Promise<void> {
+  await propertyMediaStorage.delete({ bucket: stored.bucket, path: stored.path });
 }
 
 export async function fetchPropertyMedia(propertyId: string): Promise<PropertyMedia[]> {

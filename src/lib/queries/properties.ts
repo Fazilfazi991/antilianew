@@ -9,7 +9,7 @@ export async function fetchProperties(): Promise<Property[]> {
     .eq('listing_status', 'approved')
     .order('created_at', { ascending: false });
   if (error) return LOCAL_PROPERTIES;
-  return mergeLocalProperties((data ?? []).map((property) => ({ ...property, media: property.property_media ?? [] })) as Property[]);
+  return mergeLocalProperties((data ?? []).map(({ property_media, ...property }) => ({ ...property, media: property_media ?? [] })) as Property[]);
 }
 
 export async function fetchPropertyBySlug(slug: string): Promise<Property | null> {
@@ -23,7 +23,8 @@ export async function fetchPropertyBySlug(slug: string): Promise<Property | null
     .eq('listing_status', 'approved')
     .single();
   if (error) return null;
-  return { ...data, media: data.property_media ?? [] } as Property;
+  const { property_media, ...property } = data;
+  return { ...property, media: property_media ?? [] } as Property;
 }
 
 export async function fetchFeaturedProperties(limit = 6): Promise<Property[]> {

@@ -68,7 +68,7 @@ export function PropertiesPage() {
       {/* Property grid */}
       <section className="max-w-container-max mx-auto px-margin-edge pb-16 md:pb-24">
         {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-10">
+          <div className="grid grid-cols-1 gap-x-7 gap-y-10 md:grid-cols-2 xl:grid-cols-3">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="aspect-[16/10] rounded-[18px] bg-surface-container mb-4" />
@@ -110,7 +110,7 @@ export function PropertiesPage() {
 
         {!loading && !error && items.length > 0 && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-10">
+            <div className="grid grid-cols-1 gap-x-7 gap-y-10 md:grid-cols-2 xl:grid-cols-3">
               {items.map((property, i) => (
                 <PropertyCard key={property.id} property={property} index={i} />
               ))}
@@ -126,7 +126,6 @@ export function PropertiesPage() {
     </div>
   );
 }
-
 
 
 

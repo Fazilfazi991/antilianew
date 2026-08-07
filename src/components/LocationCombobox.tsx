@@ -59,7 +59,7 @@ export function LocationCombobox({ locations, value, onChange, onOpenChange, cla
         aria-expanded={open}
         aria-controls={listId}
         aria-autocomplete="list"
-        className="h-[54px] w-full rounded-xl border border-white/30 bg-black/15 py-2 pl-12 pr-11 font-body-md text-[16px] font-medium text-white placeholder:text-white/60 outline-none transition-colors focus:border-[#d9b780] focus:ring-2 focus:ring-[#d9b780]/30"
+        className="h-11 w-full rounded-lg border border-white/30 bg-black/15 py-2 pl-12 pr-11 font-body-md text-[15px] font-medium text-white placeholder:text-white/60 outline-none transition-colors focus:border-[#d9b780] focus:ring-2 focus:ring-[#d9b780]/30"
       />
       <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-white/70" />
       {open && normalizedQuery && (

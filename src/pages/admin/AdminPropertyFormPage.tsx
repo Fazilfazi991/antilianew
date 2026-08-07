@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Upload, X, Star, Video, Trash2 } from 'lucide-react';
-import { createProperty, deletePropertyMedia, fetchPropertyMedia, updateProperty, uploadPropertyImage, uploadPropertyVideo } from '@/lib/queries/admin';
+import { cleanupUnlinkedPropertyVideo, createProperty, deletePropertyMedia, fetchPropertyMedia, PropertyVideoMetadataError, retryPropertyVideoMetadata, updateProperty, uploadPropertyImage, uploadPropertyVideo, type MediaOperationStage, type PropertyWriteData } from '@/lib/queries/admin';
 import { fetchProperties } from '@/lib/queries/properties';
 import { slugify } from '@/lib/utils';
 import { useCities } from '@/hooks/useCities';
 import { PROPERTY_CATEGORIES, PROPERTY_TYPES_BY_CATEGORY, TRANSACTION_TYPES } from '@/lib/propertyTaxonomy';
-import type { Property, PropertyCategory, PropertyType, Furnishing, PropertyStatus, PropertyImage, PropertyMedia, TransactionType } from '@/lib/types';
+import type { PropertyCategory, PropertyType, Furnishing, PropertyStatus, PropertyImage, PropertyMedia, TransactionType } from '@/lib/types';
 import { formatMediaSize, PROPERTY_MEDIA_LIMITS, validatePropertyVideo } from '@/lib/propertyMedia';
-import { getPublicPropertyMediaUrl } from '@/lib/propertyMediaStorage';
+import { getPublicPropertyMediaUrl, type StoredPropertyMedia } from '@/lib/propertyMediaStorage';
 
-type FormData = Omit<Property, 'id' | 'created_at' | 'updated_at'>;
+type FormData = PropertyWriteData;
+type RetryableVideo = { file: File; stored: StoredPropertyMedia };
 
 const EMPTY: FormData = {
   slug: '',
@@ -86,6 +87,9 @@ export function AdminPropertyFormPage() {
   const [queuedVideos, setQueuedVideos] = useState<File[]>([]);
   const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
   const [uploadingVideos, setUploadingVideos] = useState(false);
+  const [mediaStage, setMediaStage] = useState<MediaOperationStage | null>(null);
+  const [retryableVideos, setRetryableVideos] = useState<Record<string, RetryableVideo>>({});
+  const [createdPropertyId, setCreatedPropertyId] = useState<string | null>(null);
   const [amenityInput, setAmenityInput] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
@@ -95,8 +99,13 @@ export function AdminPropertyFormPage() {
     Promise.all([fetchProperties(), fetchPropertyMedia(id)]).then(([list, media]) => {
       const found = list.find(p => p.id === id);
       if (found) {
-        const { id: _id, created_at: _c, updated_at: _u, ...rest } = found;
-        setForm(rest);
+        const editable = { ...found } as Partial<PropertyWriteData> & { id?: string; created_at?: string; updated_at?: string; media?: unknown; property_media?: unknown };
+        delete editable.id;
+        delete editable.created_at;
+        delete editable.updated_at;
+        delete editable.media;
+        delete editable.property_media;
+        setForm(editable as PropertyWriteData);
       }
       setVideoMedia(media.filter(item => item.media_type === 'video'));
       setLoading(false);
@@ -164,7 +173,21 @@ export function AdminPropertyFormPage() {
       setError(`A property can have up to ${PROPERTY_MEDIA_LIMITS.maxVideos} videos.`); return;
     }
     setQueuedVideos(prev => [...prev, ...selected]);
+    setMediaStage('validating');
     setError('');
+  }
+
+  const videoKey = (file: File) => `${file.name}-${file.lastModified}`;
+
+  async function discardRetryableVideo(file: File) {
+    const key = videoKey(file);
+    const retry = retryableVideos[key];
+    if (retry) {
+      try { await cleanupUnlinkedPropertyVideo(retry.stored); }
+      catch (storageError) { console.error('Property video cleanup failed', { stage: 'failed', error: storageError }); }
+      setRetryableVideos(previous => { const next = { ...previous }; delete next[key]; return next; });
+    }
+    setQueuedVideos(previous => previous.filter(item => videoKey(item) !== key));
   }
 
   async function removeVideo(media: PropertyMedia) {
@@ -179,11 +202,44 @@ export function AdminPropertyFormPage() {
     const uploaded: PropertyMedia[] = [];
     try {
       for (const file of queuedVideos) {
-        const key = `${file.name}-${file.lastModified}`;
-        uploaded.push(await uploadPropertyVideo(propertyId, file, progress => setVideoProgress(prev => ({ ...prev, [key]: progress }))));
+        const key = videoKey(file);
+        if (retryableVideos[key]) continue;
+        setMediaStage('uploading');
+        try {
+          uploaded.push(await uploadPropertyVideo(propertyId, file, progress => { setVideoProgress(prev => ({ ...prev, [key]: progress })); if (progress === 100) setMediaStage('saving-media'); }));
+        } catch (error) {
+          if (error instanceof PropertyVideoMetadataError) {
+            setRetryableVideos(previous => ({ ...previous, [key]: { file, stored: error.stored } }));
+          }
+          console.error('Property video save failed', { stage: error instanceof PropertyVideoMetadataError ? error.stage : 'uploading', error });
+          setMediaStage('failed');
+          throw error;
+        }
       }
       setVideoMedia(prev => [...prev, ...uploaded]);
-      setQueuedVideos([]);
+      setQueuedVideos(previous => previous.filter(file => !uploaded.some(media => media.file_name === file.name)));
+      setMediaStage('complete');
+    } finally { setUploadingVideos(false); }
+  }
+
+  async function retryVideoMetadata(file: File) {
+    const key = videoKey(file);
+    const retry = retryableVideos[key];
+    const propertyId = id ?? createdPropertyId;
+    if (!retry || !propertyId) return;
+    setUploadingVideos(true);
+    setMediaStage('saving-media');
+    setError('');
+    try {
+      const media = await retryPropertyVideoMetadata(propertyId, retry.file, retry.stored);
+      setVideoMedia(previous => [...previous, media]);
+      setQueuedVideos(previous => previous.filter(item => videoKey(item) !== key));
+      setRetryableVideos(previous => { const next = { ...previous }; delete next[key]; return next; });
+      setMediaStage('complete');
+    } catch (error) {
+      console.error('Property video save failed', { stage: 'saving-media', error });
+      setMediaStage('failed');
+      setError('Could not save video details. Please retry.');
     } finally { setUploadingVideos(false); }
   }
 
@@ -207,15 +263,19 @@ export function AdminPropertyFormPage() {
     setSaving(true);
     setError('');
     try {
-      if (isEdit && id) {
-        await updateProperty(id, form);
-        await uploadQueuedVideos(id);
+      const propertyId = id ?? createdPropertyId;
+      setMediaStage('saving-property');
+      if (propertyId) {
+        await updateProperty(propertyId, form);
+        await uploadQueuedVideos(propertyId);
       } else {
         const property = await createProperty(form);
+        setCreatedPropertyId(property.id);
         await uploadQueuedVideos(property.id);
       }
       navigate('/admin/properties');
     } catch (e: unknown) {
+      console.error('Property video save failed', { stage: mediaStage ?? 'saving-property', error: e });
       setError(e instanceof Error ? e.message : 'Save failed');
       setSaving(false);
     }
@@ -496,8 +556,9 @@ export function AdminPropertyFormPage() {
           <input ref={videoRef} type="file" accept="video/mp4,video/quicktime,video/x-m4v,video/webm,.mp4,.mov,.m4v,.webm" multiple className="hidden" onChange={e => queueVideos(e.target.files)} />
           <div className="grid gap-3 sm:grid-cols-2">
             {videoMedia.map(media => <div key={media.id} className="rounded-lg border border-surface-variant p-3"><video controls preload="metadata" playsInline src={getPublicPropertyMediaUrl(media.storage_bucket, media.storage_path)} className="aspect-video w-full rounded bg-black" /><div className="mt-2 flex items-center justify-between gap-2 text-xs text-on-surface-variant"><span className="truncate">{media.file_name}</span><button type="button" onClick={() => void removeVideo(media)} aria-label={`Remove ${media.file_name ?? 'video'}`} className="text-error"><Trash2 className="size-4" /></button></div></div>)}
-            {queuedVideos.map((file, index) => { const key = `${file.name}-${file.lastModified}`; return <div key={key} className="rounded-lg border border-[#d9b780]/40 p-3"><video controls preload="metadata" playsInline src={URL.createObjectURL(file)} className="aspect-video w-full rounded bg-black" /><div className="mt-2 flex items-center justify-between gap-2 text-xs text-on-surface-variant"><span className="truncate">{file.name} · {formatMediaSize(file.size)}</span><button type="button" onClick={() => setQueuedVideos(prev => prev.filter((_, i) => i !== index))} aria-label={`Remove ${file.name}`} className="text-error"><X className="size-4" /></button></div>{uploadingVideos && <div className="mt-2 h-1 rounded bg-surface-container"><div className="h-1 rounded bg-secondary" style={{ width: `${videoProgress[key] ?? 0}%` }} /></div>}</div>; })}
+            {queuedVideos.map(file => { const key = videoKey(file); const retry = retryableVideos[key]; return <div key={key} className="rounded-lg border border-[#d9b780]/40 p-3"><video controls preload="metadata" playsInline src={URL.createObjectURL(file)} className="aspect-video w-full rounded bg-black" /><div className="mt-2 flex items-center justify-between gap-2 text-xs text-on-surface-variant"><span className="truncate">{file.name} · {formatMediaSize(file.size)}</span><button type="button" onClick={() => void discardRetryableVideo(file)} aria-label={`Remove ${file.name}`} className="text-error"><X className="size-4" /></button></div>{retry && <div className="mt-2 flex items-center justify-between gap-3 text-xs text-error"><span>Video uploaded. Details still need saving.</span><button type="button" onClick={() => void retryVideoMetadata(file)} className="font-semibold text-primary underline">Retry save</button></div>}{uploadingVideos && <div className="mt-2 h-1 rounded bg-surface-container"><div className="h-1 rounded bg-secondary" style={{ width: `${videoProgress[key] ?? 0}%` }} /></div>}</div>; })}
           </div>
+          {mediaStage && <p className="text-sm text-on-surface-variant" role="status">{mediaStage === 'validating' ? 'Video ready to upload.' : mediaStage === 'uploading' ? 'Uploading video…' : mediaStage === 'saving-media' ? 'Video uploaded. Saving video details…' : mediaStage === 'saving-property' ? 'Saving listing…' : mediaStage === 'complete' ? 'Video uploaded successfully.' : 'Video save failed. Review the message below or retry.'}</p>}
         </Section>
 
         {error && (
