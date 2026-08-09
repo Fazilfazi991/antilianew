@@ -75,7 +75,7 @@ export function Hero() {
 
       <div className="relative z-10 flex min-h-[calc(100dvh-76px)] flex-col items-center justify-center px-5 pb-7 pt-12 text-center md:px-12 md:pt-14">
         <motion.span
-          className="mb-2 block font-label-caps text-label-caps uppercase tracking-[0.25em] text-[#A68966]"
+          className="mb-2 block font-label-caps text-[16px] font-semibold uppercase leading-5 tracking-[0.25em] text-[#A68966]"
           initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
