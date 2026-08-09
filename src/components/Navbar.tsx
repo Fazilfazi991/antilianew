@@ -18,9 +18,9 @@ export function Navbar() {
   const { pathname } = useLocation();
   const linkStyle = (href: string) => `font-body-md text-sm font-medium transition-colors ${pathname === href ? 'text-[#9e7b3d]' : 'text-[#112a4d] hover:text-[#9e7b3d]'}`;
   return <>
-    <header className="sticky top-0 z-50 border-b border-[#d9b780]/20 bg-[#fffdf8]/95 shadow-[0_2px_16px_rgba(10,31,60,0.08)] backdrop-blur-md">
-      <div className="mx-auto flex h-[76px] max-w-container-max items-center justify-between gap-5 px-margin-edge">
-        <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-3"><img src="/logo/fulllogo_color.png" alt="Antilia Real Estate" className="h-16 w-auto max-w-[175px] object-contain sm:max-w-[205px]" /><span className="border-l border-[#d9b780]/40 pl-2 text-[8px] italic leading-tight tracking-[.06em] text-[#112a4d]/75 sm:pl-3 sm:text-[10px] lg:text-[11px] lg:tracking-[.08em]">Crafting Spaces,<br />Creating Value</span></Link>
+    <header className="sticky top-0 z-50 bg-transparent">
+      <div className="mx-auto flex h-[99px] max-w-container-max items-center justify-between gap-5 px-margin-edge">
+        <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-3"><img src="/logo/fulllogo_color.png" alt="Antilia Real Estate" className="h-[5.2rem] w-auto max-w-[228px] object-contain sm:max-w-[267px]" /><span className="border-l border-[#d9b780]/40 pl-2 text-[8px] italic leading-tight tracking-[.06em] text-[#112a4d]/75 sm:pl-3 sm:text-[10px] lg:text-[11px] lg:tracking-[.08em]">Crafting Spaces,<br />Creating Value</span></Link>
         <nav className="hidden items-center gap-5 lg:flex" aria-label="Primary navigation">
           <Link to="/" className={linkStyle('/')}>Home</Link>
           <Dropdown label="Properties">{properties.map((item) => <Link key={item.label} to={item.href} className="block rounded-lg px-3 py-2 text-sm text-[#112a4d] hover:bg-[#112a4d] hover:text-white">{item.label}</Link>)}</Dropdown>
