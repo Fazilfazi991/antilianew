@@ -24,8 +24,8 @@ export function StatsBar() {
               viewport={{ once: true, amount: 0.3 }}
               transition={{ delay: i * 0.08, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <span className="font-headline-lg text-headline-lg text-primary">{stat.number}</span>
-              <span className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-[0.1em]">
+              <span className="font-headline-lg text-[clamp(21px,2.24vw,29.4px)] leading-[1.15] tracking-[-0.01em] text-primary">{stat.number}</span>
+              <span className="font-label-caps text-[8.4px] font-semibold leading-[11px] text-on-surface-variant uppercase tracking-[0.1em]">
                 {stat.label}
               </span>
             </motion.div>
@@ -35,5 +35,4 @@ export function StatsBar() {
     </section>
   );
 }
-
 

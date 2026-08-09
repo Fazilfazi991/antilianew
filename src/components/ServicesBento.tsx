@@ -50,7 +50,7 @@ export function ServicesBento() {
       <div className="mx-auto max-w-container-max px-margin-edge">
         <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-start">
           <motion.h2
-            className="max-w-[720px] font-body-md text-[40px] font-semibold leading-[1.12] tracking-[0] text-primary sm:text-[52px] lg:text-[60px]"
+            className="max-w-[720px] font-body-md text-[28px] font-semibold leading-[1.12] tracking-[0] text-primary sm:text-[36.4px] lg:text-[42px]"
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.25 }}
@@ -59,7 +59,7 @@ export function ServicesBento() {
             Expert services <span className="text-outline">tailored for your property goals</span>
           </motion.h2>
           <motion.p
-            className="max-w-[620px] font-body-md text-[17px] leading-[1.7] text-on-surface-variant lg:pt-1"
+            className="max-w-[620px] font-body-md text-[11.9px] leading-[1.7] text-on-surface-variant lg:pt-1"
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.25 }}
@@ -131,4 +131,3 @@ export function ServicesBento() {
     </section>
   );
 }
-

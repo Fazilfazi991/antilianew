@@ -27,7 +27,7 @@ export function WhyAntilia() {
       <div className="grid grid-cols-12 gap-gutter">
         <div className="col-span-12 lg:col-span-5 mb-6 lg:mb-0">
           <motion.span
-            className="font-label-caps text-label-caps text-outline uppercase tracking-[0.2em] block mb-6"
+            className="mb-6 block font-label-caps text-[8.4px] font-semibold uppercase leading-[11px] tracking-[0.2em] text-outline"
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
@@ -36,7 +36,7 @@ export function WhyAntilia() {
             Why Antilia
           </motion.span>
           <motion.h2
-            className="font-headline-lg text-headline-lg text-primary"
+            className="font-headline-lg text-[clamp(21px,2.24vw,29.4px)] leading-[1.15] tracking-[-0.01em] text-primary"
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
@@ -56,11 +56,11 @@ export function WhyAntilia() {
               viewport={{ once: true, amount: 0.2 }}
               transition={{ delay: i * 0.1, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <span className="font-label-caps text-label-caps text-secondary uppercase tracking-[0.15em]">
+              <span className="font-label-caps text-[8.4px] font-semibold uppercase leading-[11px] tracking-[0.15em] text-secondary">
                 {f.eyebrow}
               </span>
-              <h3 className="font-headline-md text-headline-md text-primary">{f.title}</h3>
-              <p className="font-body-md text-body-md text-on-surface-variant">{f.body}</p>
+              <h3 className="font-headline-md text-[clamp(15.4px,1.82vw,21px)] leading-[1.25] text-primary">{f.title}</h3>
+              <p className="font-body-md text-[11.2px] leading-[18.2px] text-on-surface-variant">{f.body}</p>
             </motion.div>
           ))}
         </div>
@@ -68,6 +68,5 @@ export function WhyAntilia() {
     </section>
   );
 }
-
 
 

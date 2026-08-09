@@ -71,8 +71,8 @@ export function CategoryShortcuts() {
       <div className="mx-auto max-w-container-max px-margin-edge">
         <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="mb-2 font-label-caps text-label-caps uppercase tracking-[0.14em] text-secondary">Explore Antilia</p>
-            <h2 className="font-headline-lg text-headline-lg text-primary">Find the right property path</h2>
+            <p className="mb-2 font-label-caps text-[8.4px] font-semibold uppercase leading-[11px] tracking-[0.14em] text-secondary">Explore Antilia</p>
+            <h2 className="font-headline-lg text-[clamp(21px,2.24vw,29.4px)] leading-[1.15] tracking-[-0.01em] text-primary">Find the right property path</h2>
           </div>
           <div className="flex gap-2" aria-label="Category slider controls">
             <button
