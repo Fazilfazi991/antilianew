@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, Menu, MessageCircle, X } from 'lucide-react';
@@ -15,10 +15,19 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileProperties, setMobileProperties] = useState(false);
   const [mobileServices, setMobileServices] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
   const { pathname } = useLocation();
   const linkStyle = (href: string) => `font-body-md text-sm font-medium transition-colors ${pathname === href ? 'text-[#9e7b3d]' : 'text-[#112a4d] hover:text-[#9e7b3d]'}`;
+
+  useEffect(() => {
+    const updateHeader = () => setHasScrolled(window.scrollY > 0);
+    updateHeader();
+    window.addEventListener('scroll', updateHeader, { passive: true });
+    return () => window.removeEventListener('scroll', updateHeader);
+  }, []);
+
   return <>
-    <header className="sticky top-0 z-50 bg-transparent">
+    <header className={`sticky top-0 z-50 transition-all ${hasScrolled ? 'border-b border-[#d9b780]/20 bg-[#fffdf8]/95 shadow-[0_2px_16px_rgba(10,31,60,0.08)] backdrop-blur-md' : 'bg-transparent'}`}>
       <div className="mx-auto flex h-[99px] max-w-container-max items-center justify-between gap-5 px-margin-edge">
         <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-3"><img src="/logo/fulllogo_color.png" alt="Antilia Real Estate" className="h-[5.2rem] w-auto max-w-[228px] object-contain sm:max-w-[267px]" /><span className="border-l border-[#d9b780]/40 pl-2 text-[8px] italic leading-tight tracking-[.06em] text-[#112a4d]/75 sm:pl-3 sm:text-[10px] lg:text-[11px] lg:tracking-[.08em]">Crafting Spaces,<br />Creating Value</span></Link>
         <nav className="hidden items-center gap-5 lg:flex" aria-label="Primary navigation">
