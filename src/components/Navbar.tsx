@@ -21,7 +21,7 @@ export function Navbar() {
   return <>
     <header className="sticky top-0 z-50 border-b border-[#d9b780]/30 bg-[#112a4d] shadow-[0_4px_20px_rgba(6,20,40,0.34)]">
       <div className="mx-auto flex h-[84px] max-w-container-max items-center justify-between gap-5 px-margin-edge">
-        <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-3"><img src="/logo/fulllogo_color.png" alt="Antilia Real Estate" className="h-[4.2rem] w-auto max-w-[160px] object-contain sm:max-w-[185px]" /><span className="hidden border-l border-[#d9b780]/45 pl-3 text-[10px] italic leading-tight tracking-[.08em] text-white/75 sm:block">Crafting Spaces,<br />Creating Value</span></Link>
+        <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-3"><img src="/logo/fulllogo_color.png" alt="Antilia Real Estate" className="h-[4.2rem] w-auto max-w-[160px] object-contain sm:max-w-[185px]" /><span className="hidden border-l border-[#d9b780]/45 pl-3 font-brand-script text-[18px] leading-[.82] text-[#ead19d] sm:block">Crafting Spaces,<br />Creating Value</span></Link>
         <nav className="hidden items-center gap-5 lg:flex" aria-label="Primary navigation">
           <Link to="/" className={linkStyle('/')}>Home</Link>
           <Dropdown label="Properties">{properties.map((item) => <Link key={item.label} to={item.href} className="block rounded-lg px-3 py-2 text-sm text-white/90 hover:bg-white/10 hover:text-[#d9b780]">{item.label}</Link>)}</Dropdown>
