@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Allura&display=swap');
 @import "@fontsource/inter/300.css";
 @import "@fontsource/inter/400.css";
 @import "@fontsource/inter/500.css";
@@ -7,7 +8,7 @@
 
 @theme {
   /* ─── Color System (Stitch / Material You palette) ───────── */
-  --color-primary:                    #000000;
+  --color-primary:                    #112a4d;
   --color-on-primary:                 #ffffff;
   --color-primary-container:          #1c1b1b;
   --color-on-primary-container:       #858383;
@@ -91,6 +92,7 @@
   --font-display:     "Noto Serif", serif;
   --font-body:        "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-sans:        "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-brand-script: "Allura", "Segoe Script", cursive;
 
   /* ─── Spacing Tokens ──────────────────────────────────────── */
   --spacing-container-max:  1440px;
@@ -113,19 +115,19 @@
 /* ─── Type Scale Utilities ────────────────────────────────── */
 @layer utilities {
   .text-display-xl {
-    font-size: clamp(38px, 4.8vw, 68px);
+    font-size: clamp(36px, 4.2vw, 60px);
     line-height: 1.12;
     letter-spacing: -0.02em;
     font-weight: 400;
   }
   .text-headline-lg {
-    font-size: clamp(30px, 3.2vw, 42px);
+    font-size: clamp(28px, 2.8vw, 36px);
     line-height: 1.15;
     letter-spacing: -0.01em;
     font-weight: 400;
   }
   .text-headline-md {
-    font-size: clamp(22px, 2.6vw, 30px);
+    font-size: clamp(20px, 2.2vw, 26px);
     line-height: 1.25;
     font-weight: 400;
   }
@@ -145,6 +147,10 @@
     letter-spacing: 0.1em;
     font-weight: 600;
   }
+}
+
+@layer utilities {
+  .font-brand-script { font-family: var(--font-brand-script); }
 }
 
 /* ─── Animations ──────────────────────────────────────────── */
@@ -193,3 +199,11 @@ body {
   display: block;
 }
 
+/* Keep the footer mark and its handwritten tagline as one centered lockup. */
+footer > div > div:first-child {
+  align-items: center;
+  text-align: center;
+}
+footer > div > div:first-child > a {
+  justify-content: center;
+}

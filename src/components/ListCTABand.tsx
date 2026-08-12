@@ -6,7 +6,7 @@ export function ListCTABand() {
   const reduced = useReducedMotion();
 
   return (
-    <section className="w-full bg-[#121212] py-10 md:py-12">
+    <section className="w-full bg-[#121212] py-9 md:py-10">
       <div className="max-w-container-max mx-auto px-margin-edge">
         <div className="grid grid-cols-12 gap-gutter items-center">
           <div className="col-span-12 lg:col-span-6 mb-6 lg:mb-0">
@@ -20,7 +20,7 @@ export function ListCTABand() {
               For Property Owners
             </motion.span>
             <motion.h2
-              className="font-headline-lg text-headline-lg text-[#F9F8F6]"
+              className="font-headline-lg text-[clamp(27px,2.5vw,34px)] leading-[1.15] text-[#F9F8F6]"
               initial={reduced ? { opacity: 0 } : { opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
@@ -64,7 +64,6 @@ export function ListCTABand() {
     </section>
   );
 }
-
 
 
 

@@ -27,16 +27,16 @@ export function PortalLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-6">
-      <div className="w-full max-w-sm">
-        <Link to="/" className="block mb-10">
-          <img src="/logo/fulllogo_transparent.png" alt="Antilia" className="h-10 w-auto invert" />
+    <div className="min-h-screen flex items-center justify-center bg-[#f7f5f0] px-6 py-8">
+      <div className="w-full max-w-sm rounded-2xl border border-[#d9b780]/35 bg-white px-6 py-7 shadow-[0_18px_50px_rgba(17,42,77,0.12)] sm:px-8">
+        <Link to="/" className="mb-5 flex justify-center">
+          <img src="/logo/fulllogo_color.png" alt="Antilia Real Estate" className="h-24 w-auto max-w-[185px] object-contain" />
         </Link>
 
-        <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.15em] mb-2">
+        <p className="font-label-caps text-label-caps text-[#9e7b3d] uppercase tracking-[0.15em] mb-2 text-center">
           Property Portal
         </p>
-        <h1 className="font-headline-lg text-headline-lg text-primary mb-10">Sign In</h1>
+        <h1 className="font-headline-lg text-[clamp(28px,4vw,34px)] text-primary mb-7 text-center">List Your Property</h1>
 
         <form onSubmit={handleSubmit} className="space-y-7">
           <div>

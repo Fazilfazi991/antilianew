@@ -31,7 +31,20 @@ function toPropertyWriteData(data: PropertyWriteData): PropertyWriteData {
 export async function adminSignIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
+  if (!data.user.email || !(await isAdminEmail(data.user.email))) {
+    await supabase.auth.signOut();
+    throw new Error('This account does not have Antilia admin or staff access.');
+  }
   return data;
+}
+
+export async function isAdminEmail(email: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('admin_users')
+    .select('email')
+    .eq('email', email)
+    .maybeSingle();
+  return !error && !!data;
 }
 
 export async function adminSignOut() {

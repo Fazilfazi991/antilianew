@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Building2, ClipboardList, LogOut, Loader2 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { adminSignOut } from '@/lib/queries/admin';
 import { DashboardMobileNav } from '@/components/DashboardMobileNav';
 
@@ -12,15 +12,15 @@ const NAV = [
 ];
 
 export function AdminLayout() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, isAdmin, loading } = useAdminAccess();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (!loading && !isAuthenticated && location.pathname !== '/admin/login') {
+    if (!loading && (!isAuthenticated || !isAdmin) && location.pathname !== '/admin/login') {
       navigate('/admin/login', { replace: true });
     }
-  }, [isAuthenticated, loading, navigate, location.pathname]);
+  }, [isAuthenticated, isAdmin, loading, navigate, location.pathname]);
 
   if (loading) {
     return (
@@ -30,7 +30,7 @@ export function AdminLayout() {
     );
   }
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated || !isAdmin) return null;
 
   async function handleSignOut() {
     try {

@@ -90,7 +90,7 @@ export function FeaturedProperties() {
 
   if (loading) {
     return (
-      <section className="w-full max-w-container-max mx-auto px-margin-edge py-12 md:py-16">
+      <section className="w-full max-w-container-max mx-auto px-margin-edge py-10 md:py-12">
         <div className="h-8 bg-surface-container w-64 animate-pulse mb-6" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8 items-stretch">
           {[...Array(3)].map((_, i) => (
@@ -104,8 +104,8 @@ export function FeaturedProperties() {
   if (featured.length === 0) return null;
 
   return (
-    <section className="w-full max-w-container-max mx-auto px-margin-edge py-12 md:py-16">
-      <div className="flex items-end justify-between mb-6">
+    <section className="w-full max-w-container-max mx-auto px-margin-edge py-10 md:py-12">
+      <div className="flex items-end justify-between mb-5">
         <motion.h2 className="font-headline-lg text-headline-lg text-primary" {...fadeUp(reduced)}>
           Signature Collection
         </motion.h2>

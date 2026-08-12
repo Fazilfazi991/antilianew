@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { adminSignIn } from '@/lib/queries/admin';
-import { useAuth } from '@/hooks/useAuth';
+import { useAdminAccess } from '@/hooks/useAdminAccess';
 
 export function AdminLoginPage() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, isAdmin, loading } = useAdminAccess();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,8 +14,8 @@ export function AdminLoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && isAuthenticated) navigate('/admin', { replace: true });
-  }, [isAuthenticated, loading, navigate]);
+    if (!loading && isAuthenticated && isAdmin) navigate('/admin', { replace: true });
+  }, [isAuthenticated, isAdmin, loading, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,12 +37,13 @@ export function AdminLoginPage() {
     'w-full bg-transparent border-0 border-b border-outline-variant focus:border-primary focus:ring-0 focus:outline-none pb-3 font-body-md text-body-md text-primary placeholder:text-outline-variant transition-colors duration-300';
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-        <div className="mb-12 text-center">
-          <img src="/logo/fulllogo_transparent.png" alt="Antilia" className="h-12 mx-auto mb-8 invert" />
-          <h1 className="font-headline-lg text-headline-lg text-primary mb-2">Admin Login</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant">Antilia Real Estate management</p>
+    <div className="min-h-screen bg-[#112a4d] flex items-center justify-center px-6 py-8">
+      <div className="w-full max-w-sm rounded-2xl border border-[#d9b780]/55 bg-[#fffdf8] px-6 py-7 shadow-[0_20px_55px_rgba(0,0,0,0.28)] sm:px-8">
+        <div className="mb-7 text-center">
+          <img src="/logo/fulllogo_color.png" alt="Antilia Real Estate" className="h-24 max-w-[190px] w-auto object-contain mx-auto mb-4" />
+          <p className="font-label-caps text-label-caps text-[#9e7b3d] uppercase tracking-[0.15em] mb-2">Secure Staff Access</p>
+          <h1 className="font-headline-lg text-[clamp(28px,4vw,34px)] text-primary mb-2">Antilia Admin</h1>
+          <p className="font-body-md text-sm text-on-surface-variant">For authorized Antilia admin and staff only.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
