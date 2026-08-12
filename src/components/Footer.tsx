@@ -53,7 +53,7 @@ export function Footer() {
               className="h-20 w-auto max-w-[190px] object-contain sm:h-24 md:max-w-[210px]"
             />
           </Link>
-          <p className="mt-0 font-brand-script text-[26px] leading-[.85] text-[#ead19d] sm:text-[28px]">
+          <p className="mt-0 font-brand-script text-[18px] leading-[.9] text-[#ead19d] sm:text-[20px]">
             Crafting Spaces, Creating Value
           </p>
           <p className="mt-2 text-xs text-white/50">
