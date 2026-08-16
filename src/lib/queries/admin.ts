@@ -121,11 +121,12 @@ export async function fetchUsersByRole(role: ProfileRole): Promise<Profile[]> {
 export type AccountModerationEvent = {
   id: string;
   user_id: string;
-  actor_id: string;
+  action: 'approved' | 'rejected' | 'suspended' | 'role_changed';
+  actor_id: string | null;
   previous_role: ProfileRole | null;
   new_role: ProfileRole | null;
-  previous_account_status: string | null;
-  new_account_status: string | null;
+  previous_status: string | null;
+  new_status: string | null;
   reason: string | null;
   created_at: string;
 };
