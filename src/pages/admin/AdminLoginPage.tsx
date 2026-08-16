@@ -1,21 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { adminSignIn } from '@/lib/queries/admin';
-import { useAdminAccess } from '@/hooks/useAdminAccess';
 
 export function AdminLoginPage() {
-  const { isAuthenticated, isAdmin, loading } = useAdminAccess();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!loading && isAuthenticated && isAdmin) navigate('/admin', { replace: true });
-  }, [isAuthenticated, isAdmin, loading, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,8 +24,6 @@ export function AdminLoginPage() {
       setSubmitting(false);
     }
   }
-
-  if (loading) return null;
 
   const inputClass =
     'w-full bg-transparent border-0 border-b border-outline-variant focus:border-primary focus:ring-0 focus:outline-none pb-3 font-body-md text-body-md text-primary placeholder:text-outline-variant transition-colors duration-300';
