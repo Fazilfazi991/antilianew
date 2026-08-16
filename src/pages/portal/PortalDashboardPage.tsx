@@ -2,19 +2,22 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { fetchMyListingCounts } from '@/lib/queries/portal';
+import { fetchMyListingCounts, fetchMyListings } from '@/lib/queries/portal';
+import { ListingStatusBadge } from '@/components/WorkflowBadge';
+import type { Property } from '@/lib/types';
 
 type Counts = { total: number; draft: number; pending: number; changesRequested: number; approved: number; published: number; rejected: number };
 
 export function PortalDashboardPage() {
   const { session } = useAuth();
   const [counts, setCounts] = useState<Counts | null>(null);
+  const [listings, setListings] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!session?.user.id) return;
-    fetchMyListingCounts(session.user.id)
-      .then(setCounts)
+    Promise.all([fetchMyListingCounts(session.user.id), fetchMyListings(session.user.id)])
+      .then(([nextCounts, nextListings]) => { setCounts(nextCounts); setListings(nextListings); })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [session?.user.id]);
@@ -59,6 +62,27 @@ export function PortalDashboardPage() {
               </div>
             ))}
           </div>
+
+          {listings.filter(listing => ['changes_requested', 'rejected'].includes(listing.listing_status)).length > 0 && (
+            <section className="mb-8 border border-orange-200 bg-orange-50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[.12em] text-orange-800">Needs attention</p>
+              <div className="mt-3 space-y-3">
+                {listings.filter(listing => ['changes_requested', 'rejected'].includes(listing.listing_status)).slice(0, 3).map(listing => (
+                  <div key={listing.id} className="flex flex-wrap items-center justify-between gap-3 border-t border-orange-200 pt-3 first:border-t-0 first:pt-0">
+                    <div><p className="font-medium text-primary">{listing.title}</p>{listing.rejection_reason && <p className="mt-1 text-sm text-on-surface-variant">{listing.rejection_reason}</p>}</div>
+                    <div className="flex items-center gap-3"><ListingStatusBadge status={listing.listing_status} />{listing.listing_status === 'changes_requested' && <Link to={`/portal/listings/${listing.id}/edit`} className="text-xs font-semibold uppercase tracking-[.08em] text-primary underline">Update</Link>}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {listings.length > 0 && (
+            <section className="mb-8 border border-surface-variant p-5">
+              <div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold uppercase tracking-[.12em] text-outline">Recent listings</p><Link to="/portal/listings" className="text-xs font-semibold uppercase tracking-[.08em] text-primary underline">View all</Link></div>
+              <div className="mt-3 space-y-3">{listings.slice(0, 4).map(listing => <div key={listing.id} className="flex flex-wrap items-center justify-between gap-3 border-t border-surface-variant pt-3 first:border-t-0 first:pt-0"><div><p className="font-medium text-primary">{listing.title}</p><p className="mt-1 text-xs text-outline">{listing.area}, {listing.location}</p></div><ListingStatusBadge status={listing.listing_status} /></div>)}</div>
+            </section>
+          )}
 
           <div className="border border-surface-variant p-6">
             <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.15em] mb-4">

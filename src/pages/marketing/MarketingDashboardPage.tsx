@@ -25,7 +25,7 @@ export function MarketingDashboardPage() {
     <div className="px-5 py-6 md:px-10 md:py-10 max-w-4xl">
       <div className="mb-12 pb-6 border-b border-surface-variant">
         <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.15em] mb-2">
-          Marketing Team
+          Staff workspace
         </p>
         <h1 className="font-headline-lg text-headline-lg text-primary">Dashboard</h1>
       </div>

@@ -330,10 +330,10 @@ export function AdminDashboardPage() {
       {/* Create marketing account */}
       <div className="border border-surface-variant p-8">
         <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.15em] mb-2">
-          Create Marketing Account
+          Create Staff Account
         </p>
         <p className="font-body-md text-body-md text-on-surface-variant mb-6 text-sm">
-          Create a login for in-house or agency marketing staff. Share the credentials directly — they log in at <strong>/marketing/login</strong>. No portal signup needed.
+          Create a login for an Antilia staff member. Share the credentials directly — they log in at <strong>/marketing/login</strong>. No portal signup needed.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-5">
           {[
@@ -374,11 +374,11 @@ export function AdminDashboardPage() {
         </div>
         {users.filter(u => u.role === 'staff').length > 0 && (
           <div className="mt-6 space-y-2">
-            <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.08em] text-xs mb-3">Existing Marketing Accounts</p>
+            <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.08em] text-xs mb-3">Existing Staff Accounts</p>
             {users.filter(u => u.role === 'staff').map(u => (
               <div key={u.id} className="flex items-center gap-3 px-4 py-3 border border-surface-variant bg-surface-container-low">
                 <p className="font-body-md text-body-md text-primary flex-1">{u.full_name || '—'}</p>
-                <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.06em] text-xs">{u.position || 'Marketing'}</p>
+                <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.06em] text-xs">{u.position || 'Staff'}</p>
               </div>
             ))}
           </div>

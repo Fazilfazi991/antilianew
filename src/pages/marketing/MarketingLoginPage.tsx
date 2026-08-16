@@ -34,7 +34,7 @@ export function MarketingLoginPage() {
         </Link>
 
         <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.15em] mb-2">
-          Marketing Team
+          Antilia Staff
         </p>
         <h1 className="font-headline-lg text-headline-lg text-primary mb-10">Sign In</h1>
 
@@ -68,7 +68,7 @@ export function MarketingLoginPage() {
         </form>
 
         <p className="mt-8 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-[0.08em]">
-          Marketing accounts are created by the Antilia admin team.
+          Staff accounts are provisioned by the Antilia admin team.
         </p>
       </div>
     </div>

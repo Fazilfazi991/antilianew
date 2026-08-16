@@ -59,7 +59,7 @@ export function MarketingLayout() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <DashboardMobileNav
-        portalLabel="Marketing"
+        portalLabel="Staff"
         navItems={NAV}
         onSignOut={handleSignOut}
         profile={profile ? { name: profile.full_name || session?.user.email || 'Marketing', subtitle: session?.user.email } : null}
@@ -71,7 +71,7 @@ export function MarketingLayout() {
             <img src="/logo/fulllogo_transparent.png" alt="Antilia" className="h-9 w-auto" />
           </Link>
           <p className="font-label-caps text-label-caps text-white/25 mt-2 uppercase tracking-[0.12em]">
-            Marketing
+            Staff workspace
           </p>
         </div>
 
