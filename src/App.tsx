@@ -13,6 +13,7 @@ import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminPropertiesPage } from '@/pages/admin/AdminPropertiesPage';
 import { AdminPropertyFormPage } from '@/pages/admin/AdminPropertyFormPage';
 import { AdminPendingListingsPage } from '@/pages/admin/AdminPendingListingsPage';
+import { AdminBrokerManagementPage } from '@/pages/admin/AdminBrokerManagementPage';
 import { PortalLayout } from '@/pages/portal/PortalLayout';
 import { PortalLoginPage } from '@/pages/portal/PortalLoginPage';
 import { PortalSignupPage } from '@/pages/portal/PortalSignupPage';
@@ -31,6 +32,8 @@ import { MarketingDashboardPage } from '@/pages/marketing/MarketingDashboardPage
 import { MarketingMediaPage } from '@/pages/marketing/MarketingMediaPage';
 import { MarketingPropertiesPage } from '@/pages/marketing/MarketingPropertiesPage';
 import { MarketingPropertyFormPage } from '@/pages/marketing/MarketingPropertyFormPage';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -53,6 +56,8 @@ export default function App() {
         <Route path="/properties/:slug" element={<PublicLayout><PropertyDetailPage /></PublicLayout>} />
         <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
         <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -62,6 +67,7 @@ export default function App() {
           <Route path="properties/new" element={<AdminPropertyFormPage />} />
           <Route path="properties/:id/edit" element={<AdminPropertyFormPage />} />
           <Route path="listings" element={<AdminPendingListingsPage />} />
+          <Route path="brokers" element={<AdminBrokerManagementPage />} />
         </Route>
 
         {/* Portal */}

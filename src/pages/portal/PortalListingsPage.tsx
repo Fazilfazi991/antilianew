@@ -1,26 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Pencil, Trash2, PlusCircle } from 'lucide-react';
+import { ListingStatusBadge } from '@/components/WorkflowBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchMyListings, deletePortalListing } from '@/lib/queries/portal';
 import { formatPrice } from '@/lib/utils';
-import type { Property, ListingStatus } from '@/lib/types';
+import type { Property } from '@/lib/types';
 import { StorageImage } from '@/components/StorageImage';
-
-const STATUS_LABEL: Record<ListingStatus, string> = {
-  draft: 'Draft', pending_review: 'Pending Review', changes_requested: 'Changes Requested',
-  approved: 'Approved',
-  published: 'Published',
-  rejected: 'Rejected',
-  unpublished: 'Unpublished',
-};
-const STATUS_COLOR: Record<ListingStatus, string> = {
-  draft: 'text-outline', pending_review: 'text-amber-600', changes_requested: 'text-amber-600',
-  approved: 'text-emerald-600',
-  published: 'text-emerald-600',
-  rejected: 'text-red-500',
-  unpublished: 'text-outline',
-};
 
 export function PortalListingsPage() {
   const { session } = useAuth();
@@ -125,36 +111,18 @@ export function PortalListingsPage() {
                   </td>
                   <td className="px-5 py-4">
                     <div>
-                      <span className={`font-label-caps text-label-caps uppercase tracking-[0.06em] ${STATUS_COLOR[p.listing_status]}`}>
-                        {STATUS_LABEL[p.listing_status]}
-                      </span>
-                      {p.listing_status === 'rejected' && p.rejection_reason && (
-                        <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.04em] mt-0.5 text-xs">
-                          {p.rejection_reason}
-                        </p>
+                      <ListingStatusBadge status={p.listing_status} />
+                      {(p.listing_status === 'rejected' || p.listing_status === 'changes_requested') && p.rejection_reason && (
+                        <p className="mt-2 max-w-xs text-xs text-on-surface-variant">{p.rejection_reason}</p>
                       )}
                     </div>
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-1">
-                      <Link
-                        to={`/portal/listings/${p.id}/edit`}
-                        className="p-2 text-outline hover:text-primary transition-colors"
-                        aria-label="Edit"
-                      >
-                        <Pencil className="size-4" />
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(p.id, p.title)}
-                        disabled={deleting === p.id}
-                        className="p-2 text-outline hover:text-error transition-colors disabled:opacity-30"
-                        aria-label="Delete"
-                      >
-                        {deleting === p.id
-                          ? <Loader2 className="size-4 animate-spin" />
-                          : <Trash2 className="size-4" />
-                        }
-                      </button>
+                      {['draft', 'changes_requested'].includes(p.listing_status) ? <>
+                        <Link to={`/portal/listings/${p.id}/edit`} className="p-2 text-outline hover:text-primary transition-colors" aria-label="Edit"><Pencil className="size-4" /></Link>
+                        {p.listing_status === 'draft' && <button onClick={() => handleDelete(p.id, p.title)} disabled={deleting === p.id} className="p-2 text-outline hover:text-error transition-colors disabled:opacity-30" aria-label="Delete">{deleting === p.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}</button>}
+                      </> : <span className="text-xs text-outline">Locked while under review</span>}
                     </div>
                   </td>
                 </tr>

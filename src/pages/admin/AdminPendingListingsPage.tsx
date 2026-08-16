@@ -1,252 +1,70 @@
-import { useEffect, useState } from 'react';
-import { Loader2, CheckCircle, XCircle, Phone, Mail, MessageCircle } from 'lucide-react';
-import { fetchPendingListings, approveListing, rejectListing } from '@/lib/queries/portal';
-import type { ContactOverrides } from '@/lib/queries/portal';
-import { formatPrice, getPrimaryImage } from '@/lib/utils';
-import type { Property } from '@/lib/types';
+import { useCallback, useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { ListingStatusBadge } from '@/components/WorkflowBadge';
+import { fetchAdminListings, fetchListingReviewEvents, rejectListing, transitionListing, type ListingReviewEvent } from '@/lib/queries/portal';
+import { formatPrice } from '@/lib/utils';
+import type { ListingStatus, Property } from '@/lib/types';
+import { StorageImage } from '@/components/StorageImage';
 
-type ContactState = Record<string, ContactOverrides>;
+const filters: Array<ListingStatus | 'all'> = ['all', 'pending_review', 'changes_requested', 'approved', 'published', 'rejected', 'unpublished'];
+type Action = 'changes_requested' | 'approve' | 'publish' | 'unpublish' | 'reject';
+type PendingAction = { property: Property; action: Action } | null;
 
 export function AdminPendingListingsPage() {
   const [listings, setListings] = useState<Property[]>([]);
+  const [filter, setFilter] = useState<ListingStatus | 'all'>('pending_review');
+  const [selected, setSelected] = useState<Property | null>(null);
+  const [history, setHistory] = useState<ListingReviewEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
-  const [rejectForm, setRejectForm] = useState<{ id: string; reason: string } | null>(null);
-  const [contacts, setContacts] = useState<ContactState>({});
-  const [expandedContact, setExpandedContact] = useState<string | null>(null);
+  const [action, setAction] = useState<PendingAction>(null);
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchPendingListings()
-      .then(data => {
-        setListings(data);
-        const init: ContactState = {};
-        data.forEach(p => {
-          init[p.id] = {
-            contact_phone: p.contact_phone ?? '',
-            contact_email: p.contact_email ?? '',
-            contact_whatsapp: p.contact_whatsapp ?? '',
-          };
-        });
-        setContacts(init);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
+    try { setListings(await fetchAdminListings(filter === 'all' ? undefined : filter)); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not load listings.'); }
+    finally { setLoading(false); }
+  }, [filter]);
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
+  useEffect(() => { if (selected) fetchListingReviewEvents(selected.id).then(setHistory).catch(() => setHistory([])); }, [selected]);
 
-  function setContact(id: string, field: keyof ContactOverrides, value: string) {
-    setContacts(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
-  }
-
-  async function handleApprove(id: string) {
-    setActing(id);
+  async function performAction() {
+    if (!action || ((action.action === 'changes_requested' || action.action === 'reject') && !reason.trim())) return;
+    setActing(action.property.id); setError('');
     try {
-      const c = contacts[id] ?? {};
-      const overrides: ContactOverrides = {};
-      if (c.contact_phone?.trim()) overrides.contact_phone = c.contact_phone.trim();
-      if (c.contact_email?.trim()) overrides.contact_email = c.contact_email.trim();
-      if (c.contact_whatsapp?.trim()) overrides.contact_whatsapp = c.contact_whatsapp.trim();
-      await approveListing(id, Object.keys(overrides).length ? overrides : undefined);
-      setListings(prev => prev.filter(p => p.id !== id));
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Approve failed');
-    } finally {
-      setActing(null);
-    }
+      if (action.action === 'reject') await rejectListing(action.property.id, reason);
+      else await transitionListing(action.property.id, action.action, reason);
+      const fresh = await fetchAdminListings();
+      const updated = fresh.find(listing => listing.id === action.property.id) ?? null;
+      setAction(null); setReason(''); setSelected(updated);
+      if (updated) setHistory(await fetchListingReviewEvents(updated.id));
+      await load();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Listing action failed.'); }
+    finally { setActing(null); }
   }
 
-  async function handleReject() {
-    if (!rejectForm) return;
-    setActing(rejectForm.id);
-    try {
-      await rejectListing(rejectForm.id, rejectForm.reason);
-      setListings(prev => prev.filter(p => p.id !== rejectForm.id));
-      setRejectForm(null);
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Reject failed');
-    } finally {
-      setActing(null);
-    }
-  }
-
-  return (
-    <div className="px-5 py-6 md:px-10 md:py-10 max-w-6xl">
-      <div className="flex items-end justify-between mb-12 pb-6 border-b border-surface-variant">
-        <div>
-          <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.15em] mb-2">
-            {loading ? '…' : `${listings.length} pending`}
-          </p>
-          <h1 className="font-headline-lg text-headline-lg text-primary">Pending Listings</h1>
-        </div>
-      </div>
-
-      {loading && (
-        <div className="flex items-center justify-center py-32">
-          <Loader2 className="size-6 text-primary animate-spin" />
-        </div>
-      )}
-
-      {!loading && listings.length === 0 && (
-        <div className="text-center py-20 border border-surface-variant">
-          <p className="font-body-md text-body-md text-on-surface-variant">
-            No pending listings. You're all caught up.
-          </p>
-        </div>
-      )}
-
-      {!loading && listings.length > 0 && (
-        <div className="space-y-4">
-          {listings.map(p => {
-            const c = contacts[p.id] ?? {};
-            const isContactExpanded = expandedContact === p.id;
-            return (
-              <div key={p.id} className="border border-surface-variant overflow-hidden">
-                <div className="flex gap-5 p-5">
-                  {p.images.length > 0 && (
-                    <img src={getPrimaryImage(p)} alt="" className="w-28 h-20 object-cover shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-headline-md text-headline-md text-primary mb-1 truncate">{p.title}</h3>
-                    <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.06em] mb-2">
-                      {p.area}, {p.location} · {p.category} · {p.type}
-                    </p>
-                    <p className="font-body-md text-body-md text-on-surface-variant mb-3 line-clamp-2">
-                      {p.description}
-                    </p>
-                    <div className="flex flex-wrap gap-4 text-outline font-label-caps text-label-caps uppercase tracking-[0.06em]">
-                      <span>{formatPrice(p.price, p.currency, p.price_period)}</span>
-                      {p.category !== 'commercial' && (
-                        <>
-                          <span>{p.bedrooms === 0 ? 'Studio' : `${p.bedrooms} Beds`}</span>
-                          <span>{p.bathrooms} Baths</span>
-                        </>
-                      )}
-                      <span>{p.area_sqft.toLocaleString()} sqft</span>
-                      <span>{p.furnishing}</span>
-                    </div>
-                    {p.amenities.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-3">
-                        {p.amenities.map(a => (
-                          <span key={a} className="px-2 py-0.5 border border-surface-variant font-label-caps text-label-caps text-on-surface-variant uppercase tracking-[0.04em] text-xs">
-                            {a}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Contact overrides panel */}
-                <div className="border-t border-surface-variant">
-                  <button
-                    onClick={() => setExpandedContact(isContactExpanded ? null : p.id)}
-                    className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-surface-container-low transition-colors"
-                  >
-                    <span className="font-label-caps text-label-caps text-secondary uppercase tracking-[0.08em]">
-                      Edit Contact Details Before Approving
-                    </span>
-                    <span className="text-outline font-label-caps text-label-caps text-xs uppercase tracking-[0.06em]">
-                      {isContactExpanded ? '▲ Hide' : '▼ Show'}
-                    </span>
-                  </button>
-
-                  {isContactExpanded && (
-                    <div className="px-5 pb-5 grid grid-cols-1 md:grid-cols-3 gap-4 bg-surface-container-low">
-                      <div className="flex flex-col gap-1.5">
-                        <label className="flex items-center gap-1.5 font-label-caps text-label-caps text-outline uppercase tracking-[0.08em] text-xs">
-                          <Phone className="size-3" /> Phone
-                        </label>
-                        <input
-                          type="text"
-                          value={c.contact_phone ?? ''}
-                          onChange={e => setContact(p.id, 'contact_phone', e.target.value)}
-                          placeholder="+974 3xxx xxxx"
-                          className="bg-transparent border border-outline-variant focus:border-primary focus:outline-none px-3 py-2 font-body-md text-body-md text-primary placeholder:text-outline-variant text-sm"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="flex items-center gap-1.5 font-label-caps text-label-caps text-outline uppercase tracking-[0.08em] text-xs">
-                          <Mail className="size-3" /> Email
-                        </label>
-                        <input
-                          type="email"
-                          value={c.contact_email ?? ''}
-                          onChange={e => setContact(p.id, 'contact_email', e.target.value)}
-                          placeholder="contact@antilia.qa"
-                          className="bg-transparent border border-outline-variant focus:border-primary focus:outline-none px-3 py-2 font-body-md text-body-md text-primary placeholder:text-outline-variant text-sm"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="flex items-center gap-1.5 font-label-caps text-label-caps text-outline uppercase tracking-[0.08em] text-xs">
-                          <MessageCircle className="size-3" /> WhatsApp Number
-                        </label>
-                        <input
-                          type="text"
-                          value={c.contact_whatsapp ?? ''}
-                          onChange={e => setContact(p.id, 'contact_whatsapp', e.target.value)}
-                          placeholder="97412345678"
-                          className="bg-transparent border border-outline-variant focus:border-primary focus:outline-none px-3 py-2 font-body-md text-body-md text-primary placeholder:text-outline-variant text-sm"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 px-5 py-4 border-t border-surface-variant bg-surface-container-low">
-                  <button
-                    onClick={() => handleApprove(p.id)}
-                    disabled={acting === p.id}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-[0.08em] hover:bg-secondary disabled:opacity-50 transition-colors"
-                  >
-                    {acting === p.id ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle className="size-3.5" />}
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => setRejectForm({ id: p.id, reason: '' })}
-                    disabled={acting === p.id}
-                    className="flex items-center gap-2 px-5 py-2.5 border border-surface-variant font-label-caps text-label-caps text-on-surface-variant uppercase tracking-[0.08em] hover:border-error hover:text-error disabled:opacity-50 transition-colors"
-                  >
-                    <XCircle className="size-3.5" />
-                    Reject
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {rejectForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
-          <div className="bg-background w-full max-w-md p-8 space-y-5">
-            <h2 className="font-headline-md text-headline-md text-primary">Reject Listing</h2>
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              Optionally provide a reason. The user will see this in their portal.
-            </p>
-            <textarea
-              className="w-full bg-transparent border border-outline-variant focus:border-primary focus:ring-0 focus:outline-none p-3 font-body-md text-body-md text-primary resize-none h-24 placeholder:text-outline-variant"
-              placeholder="e.g. Images are too low resolution…"
-              value={rejectForm.reason}
-              onChange={e => setRejectForm(prev => prev ? { ...prev, reason: e.target.value } : null)}
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={handleReject}
-                disabled={!!acting}
-                className="flex items-center gap-2 px-6 py-3 bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-[0.08em] hover:bg-secondary disabled:opacity-50 transition-colors"
-              >
-                {acting ? <Loader2 className="size-4 animate-spin" /> : null}
-                Confirm Reject
-              </button>
-              <button
-                onClick={() => setRejectForm(null)}
-                className="px-6 py-3 border border-surface-variant font-label-caps text-label-caps text-on-surface-variant uppercase tracking-[0.08em] hover:border-primary hover:text-primary transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  return <div className="max-w-6xl space-y-7 px-5 py-6 md:px-10 md:py-10">
+    <header className="border-b border-surface-variant pb-6"><p className="mb-2 text-xs uppercase tracking-[.15em] text-outline">Listing moderation</p><h1 className="font-headline-lg text-headline-lg text-primary">Listing queue</h1><p className="mt-2 text-sm text-on-surface-variant">Approval and publication are separately recorded, protected actions.</p></header>
+    <div className="flex flex-wrap gap-2">{filters.map(status => <button key={status} onClick={() => setFilter(status)} className={`border px-3 py-2 text-xs font-semibold uppercase tracking-[.08em] ${filter === status ? 'border-primary bg-primary text-on-primary' : 'border-surface-variant text-on-surface-variant hover:border-primary'}`}>{status.replaceAll('_', ' ')}</button>)}</div>
+    {error && <p role="alert" className="border border-error/30 bg-red-50 p-3 text-sm text-error">{error}</p>}
+    {loading ? <div className="flex justify-center py-24"><Loader2 className="size-6 animate-spin text-primary" /></div> : <div className="grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
+      <section className="space-y-3">{listings.map(property => <article key={property.id} className={`border p-4 ${selected?.id === property.id ? 'border-primary' : 'border-surface-variant'}`}><div className="flex gap-4"><StorageImage src={property.images.find(image => image.is_primary)?.url ?? property.images[0]?.url} alt="" className="h-20 w-24 shrink-0 object-cover bg-surface-container-low" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="truncate font-semibold text-primary">{property.title}</h2><ListingStatusBadge status={property.listing_status} /></div><p className="mt-1 text-xs uppercase tracking-[.08em] text-outline">{property.area}, {property.location} · {formatPrice(property.price, property.currency, property.price_period)}</p><p className="mt-2 line-clamp-2 text-sm text-on-surface-variant">{property.description}</p><div className="mt-3 flex flex-wrap gap-2"><button onClick={() => setSelected(property)} className="border border-surface-variant px-3 py-2 text-xs font-semibold uppercase tracking-[.08em] text-on-surface-variant hover:border-primary">Review details</button><ListingActions property={property} busy={acting === property.id} begin={setAction} /></div></div></div></article>)}{listings.length === 0 && <div className="border border-surface-variant py-16 text-center text-sm text-on-surface-variant">No listings in this queue.</div>}</section>
+      <aside className="border border-surface-variant p-5">{selected ? <ListingDetail property={selected} history={history} busy={acting === selected.id} begin={setAction} /> : <p className="py-16 text-center text-sm text-on-surface-variant">Select a listing to see its moderation history.</p>}</aside>
+    </div>}
+    {action && <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-5"><div className="w-full max-w-md bg-background p-6 shadow-xl"><h2 className="font-headline-md text-primary">{label(action.action)} listing</h2><p className="mt-2 text-sm text-on-surface-variant">{requiresReason(action.action) ? 'A reason is required and will be included in the broker review record.' : 'This transition will be written to the listing audit trail.'}</p>{requiresReason(action.action) && <textarea value={reason} onChange={event => setReason(event.target.value)} className="mt-5 min-h-24 w-full border border-surface-variant p-3 text-sm outline-none focus:border-primary" placeholder={action.action === 'reject' ? 'Why is this listing rejected?' : 'What needs to change?'} />}<div className="mt-5 flex justify-end gap-3"><button onClick={() => { setAction(null); setReason(''); }} className="border border-surface-variant px-4 py-2 text-xs font-semibold uppercase tracking-[.08em]">Cancel</button><button disabled={acting === action.property.id || (requiresReason(action.action) && !reason.trim())} onClick={() => void performAction()} className="bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-[.08em] text-on-primary disabled:opacity-50">{acting === action.property.id ? 'Saving…' : 'Confirm'}</button></div></div></div>}
+  </div>;
 }
+
+function ListingActions({ property, busy, begin }: { property: Property; busy: boolean; begin: (next: PendingAction) => void }) {
+  const buttons: Array<{ action: Action; label: string }> = property.listing_status === 'pending_review' ? [{ action: 'changes_requested', label: 'Request changes' }, { action: 'approve', label: 'Approve' }, { action: 'reject', label: 'Reject' }] : property.listing_status === 'approved' ? [{ action: 'publish', label: 'Publish' }] : property.listing_status === 'published' ? [{ action: 'unpublish', label: 'Unpublish' }] : property.listing_status === 'unpublished' ? [{ action: 'publish', label: 'Republish' }] : [];
+  return <>{buttons.map(button => <button key={button.action} disabled={busy} onClick={() => begin({ property, action: button.action })} className="border border-surface-variant px-3 py-2 text-xs font-semibold uppercase tracking-[.08em] text-on-surface-variant hover:border-primary hover:text-primary disabled:opacity-50">{busy ? 'Working…' : button.label}</button>)}</>;
+}
+
+function ListingDetail({ property, history, busy, begin }: { property: Property; history: ListingReviewEvent[]; busy: boolean; begin: (next: PendingAction) => void }) {
+  return <><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-headline-md text-primary">{property.title}</h2><p className="mt-1 text-sm text-on-surface-variant">{property.area}, {property.location}</p></div><ListingStatusBadge status={property.listing_status} /></div>{property.rejection_reason && <div className="mt-5 border-l-2 border-orange-500 bg-orange-50 p-3 text-sm text-orange-900"><strong>Broker action required:</strong> {property.rejection_reason}</div>}<p className="mt-5 whitespace-pre-wrap text-sm text-on-surface-variant">{property.description}</p><div className="mt-5 grid grid-cols-2 gap-3 border-y border-surface-variant py-4 text-sm"><span className="text-on-surface-variant">Price</span><strong className="text-right text-primary">{formatPrice(property.price, property.currency, property.price_period)}</strong><span className="text-on-surface-variant">Bedrooms / baths</span><strong className="text-right text-primary">{property.bedrooms} / {property.bathrooms}</strong></div><div className="mt-5 flex flex-wrap gap-2"><ListingActions property={property} busy={busy} begin={begin} /></div><h3 className="mt-7 border-b border-surface-variant pb-2 text-xs font-semibold uppercase tracking-[.1em] text-outline">Audit history</h3><ol className="mt-3 space-y-3 text-sm">{history.map(event => <li key={event.id}><p className="font-medium capitalize text-primary">{event.action.replaceAll('_', ' ')}</p><p className="text-on-surface-variant">{event.previous_status || '—'} → {event.new_status} · {new Date(event.created_at).toLocaleString()}</p>{event.reason && <p className="mt-1 text-on-surface-variant">{event.reason}</p>}</li>)}{history.length === 0 && <li className="text-on-surface-variant">No review events yet.</li>}</ol></>;
+}
+
+function label(action: Action) { return action === 'changes_requested' ? 'Request changes to' : action === 'unpublish' ? 'Unpublish' : action[0].toUpperCase() + action.slice(1); }
+function requiresReason(action: Action) { return action === 'changes_requested' || action === 'reject'; }

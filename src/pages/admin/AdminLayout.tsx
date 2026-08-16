@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Building2, ClipboardList, LogOut, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Building2, ClipboardList, Users, LogOut, Loader2 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { adminSignOut } from '@/lib/queries/admin';
 import { DashboardMobileNav } from '@/components/DashboardMobileNav';
@@ -8,7 +8,8 @@ import { DashboardMobileNav } from '@/components/DashboardMobileNav';
 const NAV = [
   { to: '/admin',            label: 'Dashboard',        icon: LayoutDashboard, exact: true },
   { to: '/admin/properties', label: 'Properties',       icon: Building2,       exact: false },
-  { to: '/admin/listings',   label: 'Pending Listings', icon: ClipboardList,   exact: false },
+  { to: '/admin/listings',   label: 'Listing queue',    icon: ClipboardList,   exact: false },
+  { to: '/admin/brokers',    label: 'Brokers',          icon: Users,           exact: false },
 ];
 
 export function AdminLayout() {

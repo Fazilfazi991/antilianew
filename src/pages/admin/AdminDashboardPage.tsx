@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, TrendingUp, Home, PlusCircle, ClipboardList, Loader2, CheckCircle, Save, Trash2, UserCheck, MapPin, UserPlus } from 'lucide-react';
+import { Building2, TrendingUp, Home, PlusCircle, ClipboardList, Loader2, CheckCircle, Save, Trash2, MapPin, UserPlus } from 'lucide-react';
 import { useProperties } from '@/hooks/useProperties';
 import { getTransactionType } from '@/lib/propertyTaxonomy';
 import {
@@ -13,8 +13,6 @@ import {
   addCity,
   deleteCity,
   createMarketingAccount,
-  fetchPendingPortalUsers,
-  approvePortalUser,
 } from '@/lib/queries/admin';
 import type { Profile, ProfileRole, City } from '@/lib/types';
 
@@ -46,9 +44,6 @@ export function AdminDashboardPage() {
   const [mktSuccess, setMktSuccess] = useState(false);
   const [mktError, setMktError] = useState('');
 
-  const [pendingUsers, setPendingUsers] = useState<Profile[]>([]);
-  const [approvingUser, setApprovingUser] = useState<string | null>(null);
-
   useEffect(() => {
     fetchPendingCount().then(setPendingCount).catch(console.error);
     fetchAllUsers()
@@ -60,7 +55,6 @@ export function AdminDashboardPage() {
       .catch(console.error)
       .finally(() => setSettingsLoading(false));
     fetchCities().then(setCities).catch(console.error);
-    fetchPendingPortalUsers().then(setPendingUsers).catch(console.error);
   }, []);
 
   const stats = useMemo(() => {
@@ -150,19 +144,6 @@ export function AdminDashboardPage() {
       setMktError(e instanceof Error ? e.message : 'Failed to create account');
     } finally {
       setMktCreating(false);
-    }
-  }
-
-  async function handleApproveUser(userId: string) {
-    setApprovingUser(userId);
-    try {
-      await approvePortalUser(userId);
-      setPendingUsers(prev => prev.filter(u => u.id !== userId));
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, approved: true } : u));
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Approve failed');
-    } finally {
-      setApprovingUser(null);
     }
   }
 
@@ -366,34 +347,10 @@ export function AdminDashboardPage() {
         )}
       </div>
 
-      {/* Pending portal users */}
-      {pendingUsers.length > 0 && (
-        <div className="border border-surface-variant p-8">
-          <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.15em] mb-2">
-            Pending Portal Access
-          </p>
-          <p className="font-body-md text-body-md text-on-surface-variant mb-6 text-sm">
-            These users have signed up but need your approval before they can use the listing portal.
-          </p>
-          <div className="space-y-2">
-            {pendingUsers.map(u => (
-              <div key={u.id} className="flex items-center justify-between px-4 py-3 border border-surface-variant hover:bg-surface-container-low transition-colors">
-                <div>
-                  <p className="font-body-md text-body-md text-primary">{u.full_name || '—'}</p>
-                </div>
-                <button
-                  onClick={() => handleApproveUser(u.id)}
-                  disabled={approvingUser === u.id}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-[0.08em] hover:bg-secondary disabled:opacity-50 transition-colors"
-                >
-                  {approvingUser === u.id ? <Loader2 className="size-3 animate-spin" /> : <UserCheck className="size-3" />}
-                  Approve
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <Link to="/admin/brokers" className="block border border-surface-variant p-6 transition-colors hover:border-primary">
+        <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.15em]">Broker moderation</p>
+        <p className="mt-2 text-sm text-on-surface-variant">Review broker account status and audit history. Every account action requires a recorded reason.</p>
+      </Link>
 
       {/* Create marketing account */}
       <div className="border border-surface-variant p-8">

@@ -84,7 +84,8 @@ type PortalFormData = {
 
 export async function createPortalListing(
   data: PortalFormData,
-  _userId: string
+  _userId: string,
+  submit = false,
 ): Promise<Property> {
   void _userId;
   const slug = slugify(data.title) + '-' + Math.random().toString(36).slice(2, 6);
@@ -104,13 +105,14 @@ export async function createPortalListing(
     .select()
     .single();
   if (error) throw error;
-  await submitListing((result as Property).id);
+  if (submit) await submitListing((result as Property).id);
   return result as Property;
 }
 
 export async function updatePortalListing(
   id: string,
-  data: Partial<PortalFormData>
+  data: Partial<PortalFormData>,
+  submit = false,
 ): Promise<Property> {
   const { data: result, error } = await supabase
     .from('properties')
@@ -122,7 +124,7 @@ export async function updatePortalListing(
     .select()
     .single();
   if (error) throw error;
-  await submitListing(id);
+  if (submit) await submitListing(id);
   return result as Property;
 }
 
@@ -133,14 +135,48 @@ export async function deletePortalListing(id: string): Promise<void> {
 
 // ── Admin: pending queue ──────────────────────────────
 
-export async function fetchPendingListings(): Promise<Property[]> {
+export async function fetchAdminListings(status?: ListingStatus): Promise<Property[]> {
   const { data, error } = await supabase
     .from('properties')
     .select('*')
-    .eq('listing_status', 'pending_review')
-    .order('created_at', { ascending: true });
+    .order('updated_at', { ascending: false });
+  if (status) {
+    const { data: filtered, error: filterError } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('listing_status', status)
+      .order('updated_at', { ascending: false });
+    if (filterError) throw filterError;
+    return (filtered ?? []) as Property[];
+  }
   if (error) throw error;
   return (data ?? []) as Property[];
+}
+
+/** @deprecated Use fetchAdminListings with an explicit status when appropriate. */
+export async function fetchPendingListings(): Promise<Property[]> {
+  return fetchAdminListings('pending_review');
+}
+
+export type ListingReviewEvent = {
+  id: string;
+  property_id: string;
+  action: string;
+  previous_status: ListingStatus | null;
+  new_status: ListingStatus;
+  actor_id: string;
+  reason: string | null;
+  created_at: string;
+};
+
+export async function fetchListingReviewEvents(propertyId: string): Promise<ListingReviewEvent[]> {
+  const { data, error } = await supabase
+    .from('listing_review_events')
+    .select('*')
+    .eq('property_id', propertyId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as ListingReviewEvent[];
 }
 
 export type ContactOverrides = {
@@ -161,7 +197,24 @@ export async function approveListing(id: string, contacts?: ContactOverrides): P
 }
 
 export async function rejectListing(id: string, reason: string): Promise<void> {
-  const { error } = await supabase.rpc('admin_transition_listing', { p_property_id: id, p_action: 'reject', p_reason: reason || null });
+  if (!reason.trim()) throw new Error('A rejection reason is required.');
+  const { error } = await supabase.rpc('admin_transition_listing', { p_property_id: id, p_action: 'reject', p_reason: reason.trim() });
+  if (error) throw error;
+}
+
+export async function transitionListing(
+  id: string,
+  action: 'changes_requested' | 'approve' | 'publish' | 'unpublish',
+  reason?: string,
+): Promise<void> {
+  if (action === 'changes_requested' && !reason?.trim()) {
+    throw new Error('A reason is required when requesting changes.');
+  }
+  const { error } = await supabase.rpc('admin_transition_listing', {
+    p_property_id: id,
+    p_action: action,
+    p_reason: reason?.trim() || null,
+  });
   if (error) throw error;
 }
 
@@ -174,8 +227,11 @@ export async function submitListing(id: string): Promise<void> {
 
 export async function fetchMyListingCounts(userId: string): Promise<{
   total: number;
+  draft: number;
   pending: number;
+  changesRequested: number;
   approved: number;
+  published: number;
   rejected: number;
 }> {
   const { data, error } = await supabase
@@ -186,8 +242,11 @@ export async function fetchMyListingCounts(userId: string): Promise<{
   const rows = (data ?? []) as { listing_status: ListingStatus }[];
   return {
     total: rows.length,
+    draft: rows.filter(r => r.listing_status === 'draft').length,
     pending: rows.filter(r => r.listing_status === 'pending_review').length,
-    approved: rows.filter(r => r.listing_status === 'published').length,
+    changesRequested: rows.filter(r => r.listing_status === 'changes_requested').length,
+    approved: rows.filter(r => r.listing_status === 'approved').length,
+    published: rows.filter(r => r.listing_status === 'published').length,
     rejected: rows.filter(r => r.listing_status === 'rejected').length,
   };
 }

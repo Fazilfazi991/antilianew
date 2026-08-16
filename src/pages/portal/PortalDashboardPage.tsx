@@ -4,7 +4,7 @@ import { Loader2, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchMyListingCounts } from '@/lib/queries/portal';
 
-type Counts = { total: number; pending: number; approved: number; rejected: number };
+type Counts = { total: number; draft: number; pending: number; changesRequested: number; approved: number; published: number; rejected: number };
 
 export function PortalDashboardPage() {
   const { session } = useAuth();
@@ -45,9 +45,12 @@ export function PortalDashboardPage() {
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-surface-variant mb-12">
             {[
-              { label: 'Total Submitted', value: counts.total,    color: 'text-primary' },
+              { label: 'Total listings', value: counts.total,     color: 'text-primary' },
+              { label: 'Drafts',          value: counts.draft,     color: 'text-slate-600' },
               { label: 'Pending Review',  value: counts.pending,  color: 'text-amber-600' },
-              { label: 'Approved',        value: counts.approved, color: 'text-emerald-600' },
+              { label: 'Changes needed',  value: counts.changesRequested, color: 'text-orange-600' },
+              { label: 'Approved',        value: counts.approved, color: 'text-sky-600' },
+              { label: 'Published',       value: counts.published, color: 'text-emerald-600' },
               { label: 'Rejected',        value: counts.rejected, color: 'text-red-500' },
             ].map(stat => (
               <div key={stat.label} className="bg-background p-6">

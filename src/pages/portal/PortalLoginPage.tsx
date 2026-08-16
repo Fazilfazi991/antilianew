@@ -51,6 +51,7 @@ export function PortalLoginPage() {
               Password
             </label>
             <input type="password" className={inputClass} value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
+            <div className="mt-3 text-right"><Link to="/forgot-password" className="text-xs text-primary underline">Forgot password?</Link></div>
           </div>
 
           {error && (

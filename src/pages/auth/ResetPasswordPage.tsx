@@ -1,0 +1,11 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { AuthCard } from './ForgotPasswordPage';
+
+export function ResetPasswordPage() {
+  const navigate = useNavigate(); const [password, setPassword] = useState(''); const [confirm, setConfirm] = useState(''); const [loading, setLoading] = useState(false); const [error, setError] = useState('');
+  async function submit(event: React.FormEvent) { event.preventDefault(); if (password.length < 8) { setError('Use at least 8 characters.'); return; } if (password !== confirm) { setError('Passwords do not match.'); return; } setLoading(true); setError(''); try { const { error: updateError } = await supabase.auth.updateUser({ password }); if (updateError) throw updateError; navigate('/portal/login', { replace: true }); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Your recovery link is invalid or expired. Request a new one.'); } finally { setLoading(false); } }
+  return <AuthCard title="Choose a new password" subtitle="Use a strong password with at least 8 characters."><form onSubmit={submit} className="space-y-6"><label className="block text-xs font-semibold uppercase tracking-[.1em] text-outline">New password<input type="password" required minLength={8} autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} className="mt-3 w-full border-0 border-b border-outline-variant bg-transparent pb-2 text-primary outline-none focus:border-primary" /></label><label className="block text-xs font-semibold uppercase tracking-[.1em] text-outline">Confirm password<input type="password" required minLength={8} autoComplete="new-password" value={confirm} onChange={event => setConfirm(event.target.value)} className="mt-3 w-full border-0 border-b border-outline-variant bg-transparent pb-2 text-primary outline-none focus:border-primary" /></label>{error && <p role="alert" className="text-sm text-error">{error}</p>}<button disabled={loading} className="flex w-full justify-center gap-2 bg-primary py-3 text-xs font-semibold uppercase tracking-[.1em] text-on-primary disabled:opacity-50">{loading && <Loader2 className="size-4 animate-spin" />}{loading ? 'Updating…' : 'Update password'}</button></form></AuthCard>;
+}

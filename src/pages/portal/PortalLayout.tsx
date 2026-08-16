@@ -49,16 +49,21 @@ export function PortalLayout() {
     }
   }
 
-  if (profile && (profile.account_status !== 'approved' || !['broker', 'staff'].includes(profile.role))) {
+  if (profile && (profile.account_status !== 'approved' || profile.role !== 'broker')) {
+    const accountCopy = profile.account_status === 'rejected'
+      ? { icon: '!', title: 'Account request declined', body: 'Your broker account has not been approved. Please contact Antilia if you need more information.' }
+      : profile.account_status === 'suspended'
+        ? { icon: '!', title: 'Account suspended', body: 'This broker account is currently suspended. Please contact Antilia support.' }
+        : { icon: '⏳', title: 'Access pending', body: 'Your broker account is awaiting admin approval. You will gain portal access once the review is complete.' };
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
         <div className="w-full max-w-sm text-center">
           <div className="w-12 h-12 border border-amber-300 bg-amber-50 flex items-center justify-center mx-auto mb-6">
-            <span className="text-amber-600 text-lg">⏳</span>
+            <span className="text-amber-600 text-lg">{accountCopy.icon}</span>
           </div>
-          <h2 className="font-headline-lg text-headline-lg text-primary mb-4">Access Pending</h2>
+          <h2 className="font-headline-lg text-headline-lg text-primary mb-4">{accountCopy.title}</h2>
           <p className="font-body-md text-body-md text-on-surface-variant mb-8">
-            Your account is awaiting admin approval. You'll receive access once a team member has reviewed your request.
+            {accountCopy.body}
           </p>
           <button
             onClick={handleSignOut}

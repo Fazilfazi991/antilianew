@@ -123,6 +123,43 @@ export async function setUserRole(userId: string, role: ProfileRole): Promise<vo
   if (error) throw error;
 }
 
+export type AccountModerationEvent = {
+  id: string;
+  user_id: string;
+  actor_id: string;
+  previous_role: ProfileRole | null;
+  new_role: ProfileRole | null;
+  previous_account_status: string | null;
+  new_account_status: string | null;
+  reason: string | null;
+  created_at: string;
+};
+
+export async function moderateAccount(
+  userId: string,
+  accountStatus: 'approved' | 'rejected' | 'suspended' | 'pending',
+  reason: string,
+): Promise<void> {
+  if (!reason.trim()) throw new Error('A moderation reason is required.');
+  const { error } = await supabase.rpc('admin_moderate_account', {
+    p_user_id: userId,
+    p_role: null,
+    p_account_status: accountStatus,
+    p_reason: reason.trim(),
+  });
+  if (error) throw error;
+}
+
+export async function fetchAccountModerationEvents(userId: string): Promise<AccountModerationEvent[]> {
+  const { data, error } = await supabase
+    .from('account_moderation_events')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as AccountModerationEvent[];
+}
+
 export async function fetchPendingCount(): Promise<number> {
   const { count, error } = await supabase
     .from('properties')

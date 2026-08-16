@@ -168,16 +168,16 @@ export function PortalListingFormPage() {
     setAmenityInput('');
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent, submit: boolean) {
     e.preventDefault();
     if (!session?.user.id) return;
     setSaving(true);
     setError('');
     try {
       if (isEdit && id) {
-        await updatePortalListing(id, form);
+        await updatePortalListing(id, form, submit);
       } else {
-        await createPortalListing(form, session.user.id);
+        await createPortalListing(form, session.user.id, submit);
       }
       navigate('/portal/listings');
     } catch (e: unknown) {
@@ -220,7 +220,7 @@ export function PortalListingFormPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={e => void handleSubmit(e, false)} className="space-y-6">
         <Section title="Basic Info">
           <Field label="Title *">
             <input className={inputClass} value={form.title} onChange={e => set('title', e.target.value)} required placeholder="e.g. Modern Apartment in The Pearl, Doha" />
@@ -369,14 +369,23 @@ export function PortalListingFormPage() {
           <p className="font-body-md text-body-md text-error border-b border-error pb-3">{error}</p>
         )}
 
-        <div className="flex gap-4 pt-2">
+        <div className="flex flex-wrap gap-4 pt-2">
           <button
             type="submit"
             disabled={saving}
             className="flex items-center gap-2 px-8 py-3.5 bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-[0.1em] hover:bg-secondary disabled:opacity-50 transition-colors"
           >
             {saving && <Loader2 className="size-4 animate-spin" />}
-            {saving ? 'Saving…' : isEdit ? 'Resubmit for Review' : 'Submit for Review'}
+            {saving ? 'Saving…' : 'Save Draft'}
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={e => void handleSubmit(e, true)}
+            className="flex items-center gap-2 px-8 py-3.5 bg-secondary text-on-primary font-label-caps text-label-caps uppercase tracking-[0.1em] hover:bg-primary disabled:opacity-50 transition-colors"
+          >
+            {saving && <Loader2 className="size-4 animate-spin" />}
+            {saving ? 'Saving…' : isEdit ? 'Save & Resubmit' : 'Submit for Review'}
           </button>
           <Link
             to="/portal/listings"
