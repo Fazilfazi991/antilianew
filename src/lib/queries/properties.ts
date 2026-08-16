@@ -16,7 +16,7 @@ export async function fetchProperties(): Promise<Property[]> {
   const { data, error } = await supabase
     .from('properties')
     .select('*, property_media(*)')
-    .eq('listing_status', 'approved')
+    .eq('listing_status', 'published')
     .order('created_at', { ascending: false });
   if (error) return LOCAL_PROPERTIES;
   return mergeLocalProperties((data ?? []).map(({ property_media, ...property }) => ({ ...property, media: property_media ?? [] })) as Property[]);
@@ -30,7 +30,7 @@ export async function fetchPropertyBySlug(slug: string): Promise<Property | null
     .from('properties')
     .select('*, property_media(*)')
     .eq('slug', slug)
-    .eq('listing_status', 'approved')
+    .eq('listing_status', 'published')
     .single();
   if (error) return null;
   const { property_media, ...property } = data;
@@ -42,7 +42,7 @@ export async function fetchFeaturedProperties(limit = 6): Promise<Property[]> {
     .from('properties')
     .select('*')
     .eq('featured', true)
-    .eq('listing_status', 'approved')
+    .eq('listing_status', 'published')
     .order('updated_at', { ascending: false })
     .limit(limit);
   if (error) return LOCAL_PROPERTIES.filter((property) => property.featured && !isHomepageExcludedProperty(property)).slice(0, limit);

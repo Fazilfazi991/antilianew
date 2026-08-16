@@ -28,7 +28,7 @@ const makeProperty = (overrides: Partial<Property>): Property => ({
   seo_title: null,
   seo_description: null,
   owner_id: null,
-  listing_status: 'approved',
+  listing_status: 'published',
   rejection_reason: null,
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',

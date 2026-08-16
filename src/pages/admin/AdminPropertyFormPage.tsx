@@ -38,7 +38,7 @@ const EMPTY: FormData = {
   seo_title: null,
   seo_description: null,
   owner_id: null,
-  listing_status: 'approved',
+  listing_status: 'published',
   rejection_reason: null,
   contact_phone: null,
   contact_email: null,

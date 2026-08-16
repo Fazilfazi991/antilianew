@@ -12,6 +12,7 @@ import {
 import { PROPERTY_CATEGORIES, PROPERTY_TYPES_BY_CATEGORY, TRANSACTION_TYPES } from '@/lib/propertyTaxonomy';
 import { getPropertyCategory, getTransactionType } from '@/lib/propertyTaxonomy';
 import type { PropertyCategory, PropertyType, Furnishing, PropertyImage, TransactionType } from '@/lib/types';
+import { StorageImage } from '@/components/StorageImage';
 
 type FormData = {
   title: string;
@@ -349,7 +350,7 @@ export function PortalListingFormPage() {
             <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
               {form.images.map((img, i) => (
                 <div key={i} className="relative group">
-                  <img src={img.url} alt={img.alt} className={`w-full aspect-square object-cover border-2 transition-colors ${img.is_primary ? 'border-primary' : 'border-transparent'}`} />
+                  <StorageImage src={img.url} alt={img.alt} className={`w-full aspect-square object-cover border-2 transition-colors ${img.is_primary ? 'border-primary' : 'border-transparent'}`} />
                   <div className="absolute inset-0 flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 bg-black/30 transition-opacity">
                     <button type="button" onClick={() => setPrimary(i)} className="p-1.5 bg-background text-on-surface-variant hover:text-primary transition-colors">
                       <Star className="size-3.5" fill={img.is_primary ? 'currentColor' : 'none'} />

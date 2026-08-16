@@ -40,7 +40,7 @@ const EMPTY: FormData = {
   seo_title: null,
   seo_description: null,
   owner_id: null,
-  listing_status: 'pending',
+  listing_status: 'draft',
   rejection_reason: null,
   contact_phone: null,
   contact_email: null,

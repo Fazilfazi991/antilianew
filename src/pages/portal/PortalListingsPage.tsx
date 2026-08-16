@@ -5,16 +5,21 @@ import { useAuth } from '@/hooks/useAuth';
 import { fetchMyListings, deletePortalListing } from '@/lib/queries/portal';
 import { formatPrice } from '@/lib/utils';
 import type { Property, ListingStatus } from '@/lib/types';
+import { StorageImage } from '@/components/StorageImage';
 
 const STATUS_LABEL: Record<ListingStatus, string> = {
-  pending:  'Pending Review',
+  draft: 'Draft', pending_review: 'Pending Review', changes_requested: 'Changes Requested',
   approved: 'Approved',
+  published: 'Published',
   rejected: 'Rejected',
+  unpublished: 'Unpublished',
 };
 const STATUS_COLOR: Record<ListingStatus, string> = {
-  pending:  'text-amber-600',
+  draft: 'text-outline', pending_review: 'text-amber-600', changes_requested: 'text-amber-600',
   approved: 'text-emerald-600',
+  published: 'text-emerald-600',
   rejected: 'text-red-500',
+  unpublished: 'text-outline',
 };
 
 export function PortalListingsPage() {
@@ -99,7 +104,7 @@ export function PortalListingsPage() {
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       {p.images[0] && (
-                        <img
+                        <StorageImage
                           src={p.images.find(i => i.is_primary)?.url ?? p.images[0].url}
                           alt=""
                           className="size-10 object-cover shrink-0"

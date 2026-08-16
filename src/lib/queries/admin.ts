@@ -38,13 +38,12 @@ export async function adminSignIn(email: string, password: string) {
   return data;
 }
 
-export async function isAdminEmail(email: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('admin_users')
-    .select('email')
-    .eq('email', email)
-    .maybeSingle();
-  return !error && !!data;
+export async function isAdminEmail(_email: string): Promise<boolean> {
+  void _email;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data, error } = await supabase.from('profiles').select('role, account_status').eq('id', user.id).maybeSingle();
+  return !error && data?.role === 'admin' && data.account_status === 'approved';
 }
 
 export async function adminSignOut() {
@@ -120,10 +119,7 @@ export async function fetchUsersByRole(role: ProfileRole): Promise<Profile[]> {
 }
 
 export async function setUserRole(userId: string, role: ProfileRole): Promise<void> {
-  const { error } = await supabase
-    .from('profiles')
-    .update({ role })
-    .eq('id', userId);
+  const { error } = await supabase.rpc('admin_moderate_account', { p_user_id: userId, p_role: role, p_account_status: null, p_reason: null });
   if (error) throw error;
 }
 
@@ -131,7 +127,7 @@ export async function fetchPendingCount(): Promise<number> {
   const { count, error } = await supabase
     .from('properties')
     .select('id', { count: 'exact', head: true })
-    .eq('listing_status', 'pending');
+    .eq('listing_status', 'pending_review');
   if (error) throw error;
   return count ?? 0;
 }
@@ -216,18 +212,15 @@ export async function fetchPendingPortalUsers(): Promise<Profile[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
-    .eq('role', 'user')
-    .eq('approved', false)
+    .eq('role', 'broker')
+    .eq('account_status', 'pending')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as Profile[];
 }
 
 export async function approvePortalUser(userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('profiles')
-    .update({ approved: true })
-    .eq('id', userId);
+  const { error } = await supabase.rpc('admin_moderate_account', { p_user_id: userId, p_role: null, p_account_status: 'approved', p_reason: null });
   if (error) throw error;
 }
 
@@ -238,13 +231,14 @@ export async function uploadPropertyImage(
   propertySlug: string
 ): Promise<string> {
   const ext = file.name.split('.').pop();
-  const path = `properties/${propertySlug}/${Date.now()}.${ext}`;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  const path = `broker/${user.id}/properties/${propertySlug}/${Date.now()}.${ext}`;
   const { error } = await supabase.storage
     .from('property-images')
     .upload(path, file, { upsert: true });
   if (error) throw error;
-  const { data } = supabase.storage.from('property-images').getPublicUrl(path);
-  return data.publicUrl;
+  return `storage://property-images/${path}`;
 }
 
 export async function savePropertyVideoMetadata(propertyId: string, file: File, stored: StoredPropertyMedia): Promise<PropertyMedia> {

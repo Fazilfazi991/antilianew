@@ -31,6 +31,12 @@ export function MarketingLayout() {
     }
   }, [isAuthenticated, loading, navigate]);
 
+  useEffect(() => {
+    if (profile && (profile.role !== 'staff' || profile.account_status !== 'approved')) {
+      navigate('/marketing/login', { replace: true });
+    }
+  }, [profile, navigate]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">

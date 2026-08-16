@@ -16,6 +16,25 @@ export interface PropertyMediaStorageProvider {
 }
 
 const PROPERTY_MEDIA_BUCKET = 'property-media';
+const STORAGE_URI_PREFIX = 'storage://';
+
+function parseStorageReference(url: string): { bucket: string; path: string } | null {
+  if (url.startsWith(STORAGE_URI_PREFIX)) {
+    const [bucket, ...parts] = url.slice(STORAGE_URI_PREFIX.length).split('/');
+    return bucket && parts.length ? { bucket, path: parts.join('/') } : null;
+  }
+  const match = url.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/);
+  return match ? { bucket: decodeURIComponent(match[1]), path: match[2] } : null;
+}
+
+/** Returns an expiring URL for a private Supabase object, or leaves external URLs untouched. */
+export async function resolveStorageUrl(url: string): Promise<string> {
+  const reference = parseStorageReference(url);
+  if (!reference) return url;
+  const { data, error } = await supabase.storage.from(reference.bucket).createSignedUrl(reference.path, 60 * 60);
+  if (error || !data?.signedUrl) throw error ?? new Error('Unable to create a media URL');
+  return data.signedUrl;
+}
 
 export class SupabasePropertyMediaStorageProvider implements PropertyMediaStorageProvider {
   async upload({ propertyId, file, mediaType, onProgress }: Parameters<PropertyMediaStorageProvider['upload']>[0]): Promise<StoredPropertyMedia> {
@@ -31,8 +50,7 @@ export class SupabasePropertyMediaStorageProvider implements PropertyMediaStorag
     if (error) throw error;
   }
   async getPlaybackUrl({ bucket, path }: { bucket: string; path: string }) {
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    return data.publicUrl;
+    return resolveStorageUrl(`${STORAGE_URI_PREFIX}${bucket}/${path}`);
   }
 }
 
@@ -42,6 +60,6 @@ export function getPropertyMediaUrl(bucket: string, path: string) {
 }
 
 export function getPublicPropertyMediaUrl(bucket: string, path: string) {
-  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  return `${STORAGE_URI_PREFIX}${bucket}/${path}`;
 }
 // FirebasePropertyMediaStorageProvider can implement the same interface during the planned migration.

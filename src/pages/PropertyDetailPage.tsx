@@ -6,6 +6,7 @@ import type { Property, PropertyImage } from '@/lib/types';
 import { getPropertyCategory, getTransactionType, transactionLabel } from '@/lib/propertyTaxonomy';
 import { getPublicPropertyMediaUrl } from '@/lib/propertyMediaStorage';
 import { Play } from 'lucide-react';
+import { StorageImage } from '@/components/StorageImage';
 
 const TYPE_LABELS: Record<string, string> = {
   apartment: 'Apartment', villa: 'Villa', townhouse: 'Townhouse',
@@ -128,7 +129,7 @@ export function PropertyDetailPage() {
               className="group relative min-h-[320px] overflow-hidden bg-surface-container text-left lg:min-h-0"
               aria-label="Open property gallery"
             >
-              <img
+              <StorageImage
                 src={mosaicImages[0]?.url}
                 alt={mosaicImages[0]?.alt ?? property.title}
                 className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
@@ -147,7 +148,7 @@ export function PropertyDetailPage() {
                   className="group relative overflow-hidden bg-surface-container text-left"
                   aria-label={`Open gallery image ${i + 2}`}
                 >
-                  <img
+                  <StorageImage
                     src={image.url}
                     alt={image.alt ?? property.title}
                     className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
@@ -294,7 +295,7 @@ export function PropertyDetailPage() {
             </div>
 
             <div className="min-h-0 flex-1 overflow-hidden rounded-[18px] bg-on-primary/5">
-              {galleryItems[activeImage]?.kind === 'video' ? <video key={galleryItems[activeImage].url} controls playsInline preload="metadata" poster={galleryItems[activeImage].poster} className="h-full w-full object-contain" src={galleryItems[activeImage].url} aria-label={`Video tour: ${galleryItems[activeImage].alt}`} /> : <img src={galleryItems[activeImage]?.url} alt={galleryItems[activeImage]?.alt ?? property.title} className="h-full w-full object-contain" />}
+              {galleryItems[activeImage]?.kind === 'video' ? <video key={galleryItems[activeImage].url} controls playsInline preload="metadata" poster={galleryItems[activeImage].poster} className="h-full w-full object-contain" src={galleryItems[activeImage].url} aria-label={`Video tour: ${galleryItems[activeImage].alt}`} /> : <StorageImage src={galleryItems[activeImage]?.url ?? ''} alt={galleryItems[activeImage]?.alt ?? property.title} className="h-full w-full object-contain" />}
             </div>
 
             {galleryItems.length > 1 && (
@@ -309,7 +310,7 @@ export function PropertyDetailPage() {
                     }`}
                     aria-label={`Show gallery ${item.kind} ${i + 1}`}
                   >
-                    {item.kind === 'video' ? <div className="relative h-full w-full"><img src={item.poster} alt="" className="h-full w-full object-cover" /><span className="absolute inset-0 flex items-center justify-center bg-black/35"><Play className="size-6 fill-white text-white" /></span></div> : <img src={item.url} alt={item.alt ?? property.title} className="h-full w-full object-cover" />}
+                    {item.kind === 'video' ? <div className="relative h-full w-full"><StorageImage src={item.poster ?? ''} alt="" className="h-full w-full object-cover" /><span className="absolute inset-0 flex items-center justify-center bg-black/35"><Play className="size-6 fill-white text-white" /></span></div> : <StorageImage src={item.url} alt={item.alt ?? property.title} className="h-full w-full object-cover" />}
                   </button>
                 ))}
               </div>
@@ -320,7 +321,6 @@ export function PropertyDetailPage() {
     </div>
   );
 }
-
 
 
 

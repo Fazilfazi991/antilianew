@@ -44,7 +44,7 @@ export const LOCAL_PROPERTIES: Property[] = [
     seo_title: 'Premium Furnished 2BHK Apartment for Rent in Matar Qadeem',
     seo_description: 'Fully furnished 2BHK apartment in Matar Qadeem with central AC, rooftop pool, and one month free on an annual contract.',
     owner_id: null,
-    listing_status: 'approved',
+    listing_status: 'published',
     rejection_reason: null,
     contact_phone: null,
     contact_email: null,

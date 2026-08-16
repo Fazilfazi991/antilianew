@@ -166,9 +166,8 @@ export function AdminDashboardPage() {
     }
   }
 
-  const agents = users.filter(u => u.role === 'agent');
-  const marketingUsers = users.filter(u => u.role === 'marketing');
-  const portalUsers = users.filter(u => u.role === 'user');
+  const brokers = users.filter(u => u.role === 'broker');
+  const staffUsers = users.filter(u => u.role === 'staff');
 
   return (
     <div className="px-5 py-6 md:px-10 md:py-10 max-w-5xl space-y-10">
@@ -261,9 +260,9 @@ export function AdminDashboardPage() {
             {/* Summary row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-surface-variant">
               {[
-                { label: 'Agents', value: agents.length },
-                { label: 'Marketing', value: marketingUsers.length },
-                { label: 'Portal Users', value: portalUsers.length },
+                { label: 'Brokers', value: brokers.length },
+                { label: 'Staff', value: staffUsers.length },
+                { label: 'Pending brokers', value: users.filter(u => u.account_status === 'pending').length },
               ].map(r => (
                 <div key={r.label} className="bg-background px-5 py-4">
                   <p className="font-headline-md text-headline-md text-primary mb-0.5">{r.value}</p>
@@ -300,9 +299,8 @@ export function AdminDashboardPage() {
                               disabled={roleUpdating === u.id}
                               className="bg-background border border-outline-variant focus:border-primary focus:ring-0 focus:outline-none px-2 py-1 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-[0.06em] text-xs appearance-none cursor-pointer disabled:opacity-50"
                             >
-                              <option value="user">Portal User</option>
-                              <option value="agent">Agent</option>
-                              <option value="marketing">Marketing</option>
+                              <option value="broker">Broker</option>
+                              <option value="staff">Staff</option>
                             </select>
                             {roleUpdating === u.id && <Loader2 className="size-3 text-outline animate-spin" />}
                           </div>
@@ -442,10 +440,10 @@ export function AdminDashboardPage() {
             </span>
           )}
         </div>
-        {users.filter(u => u.role === 'marketing').length > 0 && (
+        {users.filter(u => u.role === 'staff').length > 0 && (
           <div className="mt-6 space-y-2">
             <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.08em] text-xs mb-3">Existing Marketing Accounts</p>
-            {users.filter(u => u.role === 'marketing').map(u => (
+            {users.filter(u => u.role === 'staff').map(u => (
               <div key={u.id} className="flex items-center gap-3 px-4 py-3 border border-surface-variant bg-surface-container-low">
                 <p className="font-body-md text-body-md text-primary flex-1">{u.full_name || '—'}</p>
                 <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.06em] text-xs">{u.position || 'Marketing'}</p>
