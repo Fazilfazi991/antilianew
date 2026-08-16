@@ -26,7 +26,13 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 
 async function privilegedFetch(path: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers)
-  headers.set('apikey', getServerKey())
+  const serverKey = getServerKey()
+  headers.set('apikey', serverKey)
+  // Legacy service-role keys are JWTs and must also identify the service role
+  // in Authorization. Modern sb_secret keys must be sent as apikey only.
+  if (serverKey.split('.').length === 3) {
+    headers.set('Authorization', `Bearer ${serverKey}`)
+  }
   return fetch(`${supabaseUrl}${path}`, { ...init, headers })
 }
 
