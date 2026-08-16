@@ -5,6 +5,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+function getServerKey() {
+  const secretKeys = Deno.env.get('SUPABASE_SECRET_KEYS')
+  if (secretKeys) {
+    try {
+      const defaultKey = JSON.parse(secretKeys).default
+      if (typeof defaultKey === 'string' && defaultKey) return defaultKey
+    } catch {
+      // Fall back to the legacy built-in variable below.
+    }
+  }
+
+  const legacyServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (legacyServiceKey) return legacyServiceKey
+  throw new Error('Server credential is unavailable')
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -13,7 +29,7 @@ Deno.serve(async (req) => {
   try {
     const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      getServerKey()
     )
 
     const authHeader = req.headers.get('Authorization')
