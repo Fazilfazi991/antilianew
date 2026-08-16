@@ -41,9 +41,9 @@ export function PortalSignupPage() {
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
         <div className="w-full max-w-sm text-center">
           <CheckCircle className="size-10 text-primary mx-auto mb-6" />
-          <h2 className="font-headline-lg text-headline-lg text-primary mb-4">Account Created</h2>
+          <h2 className="font-headline-lg text-headline-lg text-primary mb-4">Account Submitted</h2>
           <p className="font-body-md text-body-md text-on-surface-variant mb-8">
-            Your account is pending admin approval. You'll be contacted once access has been granted. If email confirmation is required, check your inbox at <strong>{email}</strong> first.
+            Your broker account has been created successfully. Your account is currently under review by Antilia Real Estate. Once an administrator approves your account, you’ll be able to access the broker dashboard and add property listings.
           </p>
           <Link
             to="/portal/login"
