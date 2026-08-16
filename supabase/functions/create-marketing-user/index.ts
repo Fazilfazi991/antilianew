@@ -4,6 +4,9 @@ const corsHeaders = {
 }
 
 function getServerKey() {
+  const configuredServiceKey = Deno.env.get('ANTILIA_SERVICE_ROLE_KEY')
+  if (configuredServiceKey) return configuredServiceKey
+
   const secretKeys = Deno.env.get('SUPABASE_SECRET_KEYS')
   if (secretKeys) {
     try {
