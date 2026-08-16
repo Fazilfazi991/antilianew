@@ -32,7 +32,7 @@ export type PropertySegment = 'residential' | 'commercial' | 'industrial';
 
 export type PropertyStatus = 'available' | 'rented' | 'sold';
 
-export type ListingStatus = 'pending' | 'approved' | 'rejected';
+export type ListingStatus = 'draft' | 'pending_review' | 'changes_requested' | 'approved' | 'published' | 'rejected' | 'unpublished';
 
 export interface PropertyImage {
   url: string;
@@ -102,7 +102,8 @@ export interface Property {
   updated_at: string;
 }
 
-export type ProfileRole = 'user' | 'agent' | 'marketing';
+export type ProfileRole = 'admin' | 'broker' | 'staff';
+export type AccountStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
 
 export interface Profile {
   id: string;
@@ -113,6 +114,7 @@ export interface Profile {
   position: string | null;
   bio: string | null;
   approved: boolean;
+  account_status: AccountStatus;
   created_at: string;
 }
 

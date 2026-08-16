@@ -49,7 +49,7 @@ export function PortalLayout() {
     }
   }
 
-  if (profile && profile.role === 'user' && profile.approved === false) {
+  if (profile && (profile.account_status !== 'approved' || !['broker', 'staff'].includes(profile.role))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
         <div className="w-full max-w-sm text-center">

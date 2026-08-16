@@ -15,8 +15,8 @@ export function MarketingDashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const approved = properties.filter(p => p.listing_status === 'approved');
-  const pending = properties.filter(p => p.listing_status === 'pending');
+  const approved = properties.filter(p => p.listing_status === 'published');
+  const pending = properties.filter(p => p.listing_status === 'pending_review');
   const totalImages = properties.reduce((sum, p) => sum + p.images.length, 0);
   const noImages = approved.filter(p => p.images.length === 0).length;
   const oneImage = approved.filter(p => p.images.length === 1).length;

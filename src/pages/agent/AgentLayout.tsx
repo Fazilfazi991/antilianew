@@ -31,6 +31,12 @@ export function AgentLayout() {
     }
   }, [isAuthenticated, loading, navigate]);
 
+  useEffect(() => {
+    if (profile && (profile.role !== 'broker' || profile.account_status !== 'approved')) {
+      navigate('/agent/login', { replace: true });
+    }
+  }, [profile, navigate]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">

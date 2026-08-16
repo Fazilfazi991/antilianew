@@ -5,10 +5,14 @@ import { fetchAllPropertiesMarketing } from '@/lib/queries/marketing';
 import type { Property } from '@/lib/types';
 
 function StatusBadge({ status }: { status: Property['listing_status'] }) {
-  const map = {
+  const map: Record<Property['listing_status'], string> = {
+    draft: 'bg-slate-50 text-slate-700 border-slate-200',
+    pending_review: 'bg-amber-50 text-amber-700 border-amber-200',
+    changes_requested: 'bg-amber-50 text-amber-700 border-amber-200',
     approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    pending:  'bg-amber-50 text-amber-700 border-amber-200',
+    published: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     rejected: 'bg-red-50 text-red-600 border-red-200',
+    unpublished: 'bg-slate-50 text-slate-700 border-slate-200',
   };
   return (
     <span className={`inline-block px-2 py-0.5 border font-label-caps text-[10px] uppercase tracking-[0.1em] ${map[status]}`}>

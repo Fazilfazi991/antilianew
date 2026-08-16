@@ -17,7 +17,7 @@ export async function fetchAllPropertiesForMedia(): Promise<Property[]> {
   const { data, error } = await supabase
     .from('properties')
     .select('id, slug, title, location, area, category, images, listing_status, created_at')
-    .eq('listing_status', 'approved')
+    .eq('listing_status', 'published')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as Property[];
@@ -111,11 +111,12 @@ export async function fetchMarketingPropertyById(id: string): Promise<Property |
 
 export async function createMarketingProperty(
   data: Omit<Property, 'id' | 'created_at' | 'updated_at'>,
-  userId: string
+  _userId: string
 ): Promise<Property> {
+  void _userId;
   const { data: result, error } = await supabase
     .from('properties')
-    .insert({ ...data, listing_status: 'pending', owner_id: userId })
+    .insert({ ...data, listing_status: 'draft' })
     .select()
     .single();
   if (error) throw error;

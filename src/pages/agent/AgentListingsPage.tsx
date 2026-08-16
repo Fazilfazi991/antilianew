@@ -7,14 +7,18 @@ import { formatPrice } from '@/lib/utils';
 import type { Property, ListingStatus } from '@/lib/types';
 
 const STATUS_LABEL: Record<ListingStatus, string> = {
-  pending:  'Pending Review',
+  draft: 'Draft', pending_review: 'Pending Review', changes_requested: 'Changes Requested',
   approved: 'Approved',
+  published: 'Published',
   rejected: 'Rejected',
+  unpublished: 'Unpublished',
 };
 const STATUS_COLOR: Record<ListingStatus, string> = {
-  pending:  'text-amber-600',
+  draft: 'text-outline', pending_review: 'text-amber-600', changes_requested: 'text-amber-600',
   approved: 'text-emerald-600',
+  published: 'text-emerald-600',
   rejected: 'text-red-500',
+  unpublished: 'text-outline',
 };
 
 export function AgentListingsPage() {

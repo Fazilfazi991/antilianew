@@ -6,6 +6,7 @@ import { formatPrice, getPrimaryImage } from '@/lib/utils';
 import { PropertyCardActions } from '@/components/PropertyCardActions';
 import { getPropertyCategory, getTransactionType, transactionLabel } from '@/lib/propertyTaxonomy';
 import { Play } from 'lucide-react';
+import { StorageImage } from '@/components/StorageImage';
 
 interface PropertyCardProps {
   property: Property;
@@ -70,18 +71,15 @@ export function PropertyCard({ property, index = 0 }: PropertyCardProps) {
       <div className="relative aspect-[16/10] overflow-hidden rounded-[18px] bg-surface-container">
         <Link to={`/properties/${property.slug}`} className="absolute inset-0 block">
           <AnimatePresence initial={false} custom={slideDirection} mode="popLayout">
-            <motion.img
+            <motion.div
               key={`${property.id}-${activeImage}-${image}`}
-              src={image}
-              alt={property.title}
-              loading="lazy"
               custom={slideDirection}
               initial={reduced ? { opacity: 0 } : { opacity: 0, x: slideDirection * 42, scale: 1.02 }}
               animate={reduced ? { opacity: 1 } : { opacity: 1, x: 0, scale: 1 }}
               exit={reduced ? { opacity: 0 } : { opacity: 0, x: slideDirection * -42, scale: 1.02 }}
               transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
+              className="absolute inset-0"
+            ><StorageImage src={image} alt={property.title} loading="lazy" className="h-full w-full object-cover" /></motion.div>
           </AnimatePresence>
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/45 to-transparent" />
           <img
