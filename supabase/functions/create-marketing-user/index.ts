@@ -26,9 +26,11 @@ Deno.serve(async (req) => {
     if (authErr || !caller?.email) throw new Error('Not authenticated')
 
     const { data: adminRow } = await serviceClient
-      .from('admin_users')
-      .select('email')
-      .eq('email', caller.email)
+      .from('profiles')
+      .select('id')
+      .eq('id', caller.id)
+      .eq('role', 'admin')
+      .eq('account_status', 'approved')
       .single()
     if (!adminRow) throw new Error('Admin access required')
 
@@ -45,10 +47,10 @@ Deno.serve(async (req) => {
     })
     if (createErr) throw createErr
 
-    // Profile row is created by the handle_new_user trigger — update it to marketing role
+    // Profile row is created by the handle_new_user trigger — update it to staff role.
     const { error: profileErr } = await serviceClient
       .from('profiles')
-      .update({ role: 'marketing', approved: true, full_name: full_name || '' })
+      .update({ role: 'staff', account_status: 'approved', approved: true, full_name: full_name || '' })
       .eq('id', created.user.id)
     if (profileErr) throw profileErr
 
