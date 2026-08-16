@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Building2, ClipboardList, Users, LogOut, Loader2 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { adminSignOut } from '@/lib/queries/admin';
@@ -17,12 +16,6 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    if (!loading && (!isAuthenticated || !isAdmin) && location.pathname !== '/admin/login') {
-      navigate('/admin/login', { replace: true });
-    }
-  }, [isAuthenticated, isAdmin, loading, navigate, location.pathname]);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -31,7 +24,7 @@ export function AdminLayout() {
     );
   }
 
-  if (!isAuthenticated || !isAdmin) return null;
+  if (!isAuthenticated || !isAdmin) return <Navigate to="/admin/login" replace />;
 
   async function handleSignOut() {
     try {

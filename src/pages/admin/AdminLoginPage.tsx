@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { adminSignIn } from '@/lib/queries/admin';
 
 export function AdminLoginPage() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -17,7 +15,9 @@ export function AdminLoginPage() {
     setSubmitting(true);
     try {
       await adminSignIn(email, password);
-      navigate('/admin', { replace: true });
+      // Start the protected area with a fresh auth read. This avoids a route-guard
+      // race immediately after Supabase persists a newly created browser session.
+      window.location.assign('/admin');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
