@@ -37,11 +37,13 @@ export function PropertyDetailPage() {
 
   useEffect(() => {
     if (!slug) return;
-    setLoading(true);
-    setDescriptionExpanded(false);
-    fetchPropertyBySlug(slug)
-      .then(setProperty)
-      .finally(() => setLoading(false));
+    void Promise.resolve().then(() => {
+      setLoading(true);
+      setDescriptionExpanded(false);
+      return fetchPropertyBySlug(slug)
+        .then(setProperty)
+        .finally(() => setLoading(false));
+    });
   }, [slug]);
 
   if (loading) {
@@ -321,12 +323,6 @@ export function PropertyDetailPage() {
     </div>
   );
 }
-
-
-
-
-
-
 
 
 
