@@ -118,11 +118,6 @@ export async function fetchUsersByRole(role: ProfileRole): Promise<Profile[]> {
   return (data ?? []) as Profile[];
 }
 
-export async function setUserRole(userId: string, role: ProfileRole): Promise<void> {
-  const { error } = await supabase.rpc('admin_moderate_account', { p_user_id: userId, p_role: role, p_account_status: null, p_reason: null });
-  if (error) throw error;
-}
-
 export type AccountModerationEvent = {
   id: string;
   user_id: string;
@@ -254,11 +249,6 @@ export async function fetchPendingPortalUsers(): Promise<Profile[]> {
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as Profile[];
-}
-
-export async function approvePortalUser(userId: string): Promise<void> {
-  const { error } = await supabase.rpc('admin_moderate_account', { p_user_id: userId, p_role: null, p_account_status: 'approved', p_reason: null });
-  if (error) throw error;
 }
 
 // ── Image upload ──────────────────────────────────────

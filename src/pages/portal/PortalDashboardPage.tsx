@@ -53,7 +53,7 @@ export function PortalDashboardPage() {
               { label: 'Pending Review',  value: counts.pending,  color: 'text-amber-600' },
               { label: 'Changes needed',  value: counts.changesRequested, color: 'text-orange-600' },
               { label: 'Approved',        value: counts.approved, color: 'text-sky-600' },
-              { label: 'Published',       value: counts.published, color: 'text-emerald-600' },
+              { label: 'Live',            value: counts.published, color: 'text-emerald-600' },
               { label: 'Rejected',        value: counts.rejected, color: 'text-red-500' },
             ].map(stat => (
               <div key={stat.label} className="bg-background p-6">
