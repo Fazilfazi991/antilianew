@@ -1,5 +1,3 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2'
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -21,33 +19,44 @@ function getServerKey() {
   throw new Error('Server credential is unavailable')
 }
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+
+async function privilegedFetch(path: string, init: RequestInit = {}) {
+  const headers = new Headers(init.headers)
+  headers.set('apikey', getServerKey())
+  return fetch(`${supabaseUrl}${path}`, { ...init, headers })
+}
+
+async function responseError(response: Response) {
+  const body = await response.json().catch(() => null)
+  return body?.msg || body?.message || body?.error_description || 'Unexpected server response'
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const serviceClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      getServerKey()
-    )
-
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) throw new Error('Not authenticated')
 
     // Verify caller is an admin
-    const { data: { user: caller }, error: authErr } = await serviceClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    )
-    if (authErr || !caller?.email) throw new Error('Not authenticated')
+    const callerResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        apikey: Deno.env.get('SUPABASE_ANON_KEY')!,
+        Authorization: authHeader,
+      },
+    })
+    if (!callerResponse.ok) throw new Error('Not authenticated')
+    const caller = await callerResponse.json()
+    if (!caller?.id || !caller?.email) throw new Error('Not authenticated')
 
-    const { data: adminRow } = await serviceClient
-      .from('profiles')
-      .select('id')
-      .eq('id', caller.id)
-      .eq('role', 'admin')
-      .eq('account_status', 'approved')
-      .single()
+    const profileResponse = await privilegedFetch(
+      `/rest/v1/profiles?id=eq.${encodeURIComponent(caller.id)}&role=eq.admin&account_status=eq.approved&select=id`
+    )
+    if (!profileResponse.ok) throw new Error(await responseError(profileResponse))
+    const [adminRow] = await profileResponse.json()
     if (!adminRow) throw new Error('Admin access required')
 
     const body = await req.json()
@@ -59,20 +68,29 @@ Deno.serve(async (req) => {
     if (password.length < 8) throw new Error('Password must be at least 8 characters')
 
     // Create auth user — email pre-confirmed, no confirmation email sent
-    const { data: created, error: createErr } = await serviceClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: fullName },
+    const createResponse = await privilegedFetch('/auth/v1/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: fullName },
+      }),
     })
-    if (createErr) throw createErr
+    if (!createResponse.ok) throw new Error(await responseError(createResponse))
+    const created = await createResponse.json()
 
     // Profile row is created by the handle_new_user trigger — update it to staff role.
-    const { error: profileErr } = await serviceClient
-      .from('profiles')
-      .update({ role: 'staff', account_status: 'approved', approved: true, full_name: fullName })
-      .eq('id', created.user.id)
-    if (profileErr) throw profileErr
+    const profileUpdateResponse = await privilegedFetch(
+      `/rest/v1/profiles?id=eq.${encodeURIComponent(created.id)}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'staff', account_status: 'approved', approved: true, full_name: fullName }),
+      }
+    )
+    if (!profileUpdateResponse.ok) throw new Error(await responseError(profileUpdateResponse))
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
