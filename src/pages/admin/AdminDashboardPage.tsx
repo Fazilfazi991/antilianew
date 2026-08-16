@@ -6,7 +6,6 @@ import { getTransactionType } from '@/lib/propertyTaxonomy';
 import {
   fetchPendingCount,
   fetchAllUsers,
-  setUserRole,
   fetchSiteSettings,
   upsertSiteSetting,
   fetchCities,
@@ -14,7 +13,7 @@ import {
   deleteCity,
   createMarketingAccount,
 } from '@/lib/queries/admin';
-import type { Profile, ProfileRole, City } from '@/lib/types';
+import type { Profile, City } from '@/lib/types';
 
 const inputClass =
   'w-full bg-transparent border-0 border-b border-outline-variant focus:border-primary focus:ring-0 focus:outline-none pb-2 font-body-md text-body-md text-primary placeholder:text-outline-variant transition-colors duration-300 text-sm';
@@ -25,7 +24,6 @@ export function AdminDashboardPage() {
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [users, setUsers] = useState<Profile[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
-  const [roleUpdating, setRoleUpdating] = useState<string | null>(null);
 
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [settingsLoading, setSettingsLoading] = useState(true);
@@ -66,18 +64,6 @@ export function AdminDashboardPage() {
     const commercial = properties.filter(p => p.category === 'commercial').length;
     return { total: properties.length, available, rented, sold, rent, buy, commercial };
   }, [properties]);
-
-  async function handleRoleChange(userId: string, role: ProfileRole) {
-    setRoleUpdating(userId);
-    try {
-      await setUserRole(userId, role);
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role } : u));
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Update failed');
-    } finally {
-      setRoleUpdating(null);
-    }
-  }
 
   async function handleSaveSettings() {
     setSettingsSaving(true);
@@ -273,18 +259,7 @@ export function AdminDashboardPage() {
                           <p className="font-label-caps text-label-caps text-outline uppercase tracking-[0.06em] text-xs">{u.position || '—'}</p>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <select
-                              value={u.role}
-                              onChange={e => handleRoleChange(u.id, e.target.value as ProfileRole)}
-                              disabled={roleUpdating === u.id}
-                              className="bg-background border border-outline-variant focus:border-primary focus:ring-0 focus:outline-none px-2 py-1 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-[0.06em] text-xs appearance-none cursor-pointer disabled:opacity-50"
-                            >
-                              <option value="broker">Broker</option>
-                              <option value="staff">Staff</option>
-                            </select>
-                            {roleUpdating === u.id && <Loader2 className="size-3 text-outline animate-spin" />}
-                          </div>
+                          <span className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-[0.06em] text-xs">{u.role}</span>
                         </td>
                       </tr>
                     ))}
