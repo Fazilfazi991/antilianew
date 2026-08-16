@@ -34,8 +34,12 @@ Deno.serve(async (req) => {
       .single()
     if (!adminRow) throw new Error('Admin access required')
 
-    const { email, password, full_name } = await req.json()
+    const body = await req.json()
+    const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : ''
+    const password = typeof body?.password === 'string' ? body.password : ''
+    const fullName = typeof body?.full_name === 'string' ? body.full_name.trim() : ''
     if (!email || !password) throw new Error('Email and password are required')
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('A valid email is required')
     if (password.length < 8) throw new Error('Password must be at least 8 characters')
 
     // Create auth user — email pre-confirmed, no confirmation email sent
@@ -43,14 +47,14 @@ Deno.serve(async (req) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name: full_name || '' },
+      user_metadata: { full_name: fullName },
     })
     if (createErr) throw createErr
 
     // Profile row is created by the handle_new_user trigger — update it to staff role.
     const { error: profileErr } = await serviceClient
       .from('profiles')
-      .update({ role: 'staff', account_status: 'approved', approved: true, full_name: full_name || '' })
+      .update({ role: 'staff', account_status: 'approved', approved: true, full_name: fullName })
       .eq('id', created.user.id)
     if (profileErr) throw profileErr
 
