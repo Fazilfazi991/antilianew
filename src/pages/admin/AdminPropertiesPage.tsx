@@ -1,8 +1,7 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { PlusCircle, Pencil, Trash2, Star, Loader2 } from 'lucide-react';
-import { useProperties } from '@/hooks/useProperties';
-import { deleteProperty, toggleFeatured, toggleStatus } from '@/lib/queries/admin';
+import { deleteProperty, fetchAdminProperties, toggleFeatured, toggleStatus } from '@/lib/queries/admin';
 import { formatPrice } from '@/lib/utils';
 import type { Property } from '@/lib/types';
 import { getPropertyCategory, getTransactionType } from '@/lib/propertyTaxonomy';
@@ -15,25 +14,38 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function AdminPropertiesPage() {
-  const { properties, loading, error } = useProperties();
+  const location = useLocation();
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [items, setItems] = useState<Property[] | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>((location.state as { notice?: string } | null)?.notice ?? null);
   const [transactionFilter, setTransactionFilter] = useState<'all' | 'buy' | 'rent'>('all');
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'residential' | 'commercial' | 'industrial'>('all');
+
+  useEffect(() => {
+    fetchAdminProperties()
+      .then(setProperties)
+      .catch((e: unknown) => setError(e instanceof Error ? e : new Error('Unable to load properties.')))
+      .finally(() => setLoading(false));
+  }, []);
 
   const displayed = (items ?? properties).filter(property =>
     (transactionFilter === 'all' || getTransactionType(property) === transactionFilter) &&
     (categoryFilter === 'all' || getPropertyCategory(property) === categoryFilter)
   );
 
-  async function handleDelete(id: string, title: string) {
-    if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  async function handleDelete(id: string) {
+    if (!window.confirm('Delete this property? This action cannot be undone.')) return;
     setDeleting(id);
     try {
       await deleteProperty(id);
       setItems(prev => (prev ?? properties).filter(p => p.id !== id));
+      setNotice('Property deleted successfully.');
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Delete failed');
+      console.error('Property delete failed', e);
+      setNotice('Unable to delete property.');
     } finally {
       setDeleting(null);
     }
@@ -46,11 +58,13 @@ export function AdminPropertiesPage() {
     );
     try {
       await toggleFeatured(p.id, next);
+      setNotice('Featured status updated successfully.');
     } catch (e: unknown) {
       setItems(prev =>
         (prev ?? properties).map(item => item.id === p.id ? { ...item, featured: p.featured } : item)
       );
-      alert('Failed to update featured: ' + (e instanceof Error ? e.message : String(e)));
+      console.error('Featured update failed', e);
+      setNotice('Unable to update featured status. Please try again.');
     }
   }
 
@@ -60,10 +74,13 @@ export function AdminPropertiesPage() {
     );
     try {
       await toggleStatus(p.id, status);
-    } catch {
+      setNotice('Availability updated successfully.');
+    } catch (e: unknown) {
       setItems(prev =>
         (prev ?? properties).map(item => item.id === p.id ? { ...item, status: p.status } : item)
       );
+      console.error('Availability update failed', e);
+      setNotice('Unable to update availability. Please try again.');
     }
   }
 
@@ -94,6 +111,12 @@ export function AdminPropertiesPage() {
           <option value="all">All categories</option><option value="residential">Residential</option><option value="commercial">Commercial</option><option value="industrial">Industrial</option>
         </select>
       </div>
+
+      {notice && (
+        <p className="mb-6 border-l-2 border-primary bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant" role="status">
+          {notice}<button type="button" onClick={() => setNotice(null)} className="ml-3 text-primary underline">Dismiss</button>
+        </p>
+      )}
 
       {loading && (
         <div className="flex items-center justify-center py-32">
@@ -180,7 +203,7 @@ export function AdminPropertiesPage() {
                         <Pencil className="size-4" />
                       </Link>
                       <button
-                        onClick={() => handleDelete(p.id, p.title)}
+                        onClick={() => handleDelete(p.id)}
                         disabled={deleting === p.id}
                         className="p-2 text-outline hover:text-error transition-colors disabled:opacity-30"
                         aria-label="Delete"

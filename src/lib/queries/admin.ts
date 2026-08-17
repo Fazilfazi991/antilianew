@@ -3,7 +3,14 @@ import type { Property, Profile, ProfileRole, SiteSetting, City } from '../types
 import type { PropertyMedia } from '../types';
 import { propertyMediaStorage, type StoredPropertyMedia } from '../propertyMediaStorage';
 
-export type PropertyWriteData = Omit<Property, 'id' | 'created_at' | 'updated_at' | 'media'>;
+/** Fields an admin property form may change. Workflow and ownership are governed separately. */
+export type PropertyWriteData = Pick<Property,
+  | 'slug' | 'title' | 'description' | 'transaction_type' | 'category' | 'type'
+  | 'price' | 'price_period' | 'currency' | 'location' | 'area' | 'lat' | 'lng'
+  | 'bedrooms' | 'bathrooms' | 'area_sqft' | 'furnishing' | 'status' | 'featured'
+  | 'amenities' | 'images' | 'seo_title' | 'seo_description'
+  | 'contact_phone' | 'contact_email' | 'contact_whatsapp'
+>;
 export type MediaOperationStage = 'validating' | 'uploading' | 'saving-media' | 'saving-property' | 'complete' | 'failed';
 
 export class PropertyVideoMetadataError extends Error {
@@ -20,12 +27,45 @@ export class PropertyVideoMetadataError extends Error {
   }
 }
 
-function toPropertyWriteData(data: PropertyWriteData): PropertyWriteData {
-  // Runtime guard: relation fields returned by Supabase must never be PATCHed to properties.
-  const property = { ...(data as PropertyWriteData & { media?: unknown; property_media?: unknown }) };
-  delete property.media;
-  delete property.property_media;
-  return property as PropertyWriteData;
+export function toPropertyWriteData(data: PropertyWriteData): PropertyWriteData {
+  // An explicit allowlist prevents relation, review, ownership and listing-state
+  // fields returned by Supabase from being sent by an ordinary form save.
+  return {
+    slug: data.slug, title: data.title, description: data.description,
+    transaction_type: data.transaction_type, category: data.category, type: data.type,
+    price: data.price, price_period: data.price_period, currency: data.currency,
+    location: data.location, area: data.area, lat: data.lat, lng: data.lng,
+    bedrooms: data.bedrooms, bathrooms: data.bathrooms, area_sqft: data.area_sqft,
+    furnishing: data.furnishing, status: data.status, featured: data.featured,
+    amenities: data.amenities, images: data.images,
+    seo_title: data.seo_title, seo_description: data.seo_description,
+    contact_phone: data.contact_phone, contact_email: data.contact_email, contact_whatsapp: data.contact_whatsapp,
+  };
+}
+
+function mapPropertyRecord(record: Property & { property_media?: PropertyMedia[] }): Property {
+  const { property_media, ...property } = record;
+  return { ...property, media: property_media ?? [] };
+}
+
+/** Admin reads must never use the public fallback catalogue. */
+export async function fetchAdminProperties(): Promise<Property[]> {
+  const { data, error } = await supabase
+    .from('properties')
+    .select('*, property_media(*)')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(record => mapPropertyRecord(record as Property & { property_media?: PropertyMedia[] }));
+}
+
+export async function fetchAdminProperty(id: string): Promise<Property | null> {
+  const { data, error } = await supabase
+    .from('properties')
+    .select('*, property_media(*)')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapPropertyRecord(data as Property & { property_media?: PropertyMedia[] }) : null;
 }
 
 export async function adminSignIn(email: string, password: string) {
@@ -59,9 +99,11 @@ export async function getSession() {
 export async function createProperty(
   data: PropertyWriteData
 ): Promise<Property> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
   const { data: result, error } = await supabase
     .from('properties')
-    .insert(toPropertyWriteData(data))
+    .insert({ ...toPropertyWriteData(data), owner_id: user.id, listing_status: 'published' })
     .select()
     .single();
   if (error) throw error;
@@ -83,15 +125,35 @@ export async function updateProperty(
 }
 
 export async function deleteProperty(id: string): Promise<void> {
-  const { error } = await supabase.from('properties').delete().eq('id', id);
+  const property = await fetchAdminProperty(id);
+  if (!property) throw new Error('Property not found');
+
+  const storageObjects = new Map<string, string[]>();
+  const addStorageObject = (bucket: string, path: string) => {
+    storageObjects.set(bucket, [...(storageObjects.get(bucket) ?? []), path]);
+  };
+  for (const image of property.images) {
+    const match = image.url.match(/^storage:\/\/([^/]+)\/(.+)$/);
+    if (match) addStorageObject(match[1], match[2]);
+  }
+  for (const media of property.media ?? []) addStorageObject(media.storage_bucket, media.storage_path);
+  for (const [bucket, paths] of storageObjects) {
+    const { error: storageError } = await supabase.storage.from(bucket).remove([...new Set(paths)]);
+    if (storageError) throw storageError;
+  }
+
+  const { data, error } = await supabase.from('properties').delete().eq('id', id).select('id').maybeSingle();
   if (error) throw error;
+  if (!data) throw new Error('Property not found');
 }
 
 export async function toggleFeatured(id: string, featured: boolean): Promise<void> {
   const { error } = await supabase
     .from('properties')
     .update({ featured, updated_at: new Date().toISOString() })
-    .eq('id', id);
+    .eq('id', id)
+    .select('id')
+    .single();
   if (error) throw error;
 }
 
@@ -102,7 +164,9 @@ export async function toggleStatus(
   const { error } = await supabase
     .from('properties')
     .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', id);
+    .eq('id', id)
+    .select('id')
+    .single();
   if (error) throw error;
 }
 

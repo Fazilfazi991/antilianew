@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Upload, X, Star, Video, Trash2 } from 'lucide-react';
-import { cleanupUnlinkedPropertyVideo, createProperty, deletePropertyMedia, fetchPropertyMedia, PropertyVideoMetadataError, retryPropertyVideoMetadata, updateProperty, uploadPropertyImage, uploadPropertyVideo, type MediaOperationStage, type PropertyWriteData } from '@/lib/queries/admin';
-import { fetchProperties } from '@/lib/queries/properties';
+import { cleanupUnlinkedPropertyVideo, createProperty, deletePropertyMedia, fetchAdminProperty, fetchPropertyMedia, PropertyVideoMetadataError, retryPropertyVideoMetadata, toPropertyWriteData, updateProperty, uploadPropertyImage, uploadPropertyVideo, type MediaOperationStage, type PropertyWriteData } from '@/lib/queries/admin';
 import { slugify } from '@/lib/utils';
 import { useCities } from '@/hooks/useCities';
 import { PROPERTY_CATEGORIES, PROPERTY_TYPES_BY_CATEGORY, TRANSACTION_TYPES } from '@/lib/propertyTaxonomy';
@@ -37,9 +36,6 @@ const EMPTY: FormData = {
   images: [],
   seo_title: null,
   seo_description: null,
-  owner_id: null,
-  listing_status: 'published',
-  rejection_reason: null,
   contact_phone: null,
   contact_email: null,
   contact_whatsapp: null,
@@ -96,20 +92,14 @@ export function AdminPropertyFormPage() {
 
   useEffect(() => {
     if (!isEdit || !id) return;
-    Promise.all([fetchProperties(), fetchPropertyMedia(id)]).then(([list, media]) => {
-      const found = list.find(p => p.id === id);
-      if (found) {
-        const editable = { ...found } as Partial<PropertyWriteData> & { id?: string; created_at?: string; updated_at?: string; media?: unknown; property_media?: unknown };
-        delete editable.id;
-        delete editable.created_at;
-        delete editable.updated_at;
-        delete editable.media;
-        delete editable.property_media;
-        setForm(editable as PropertyWriteData);
-      }
-      setVideoMedia(media.filter(item => item.media_type === 'video'));
-      setLoading(false);
-    });
+    Promise.all([fetchAdminProperty(id), fetchPropertyMedia(id)])
+      .then(([found, media]) => {
+        if (!found) throw new Error('Property not found.');
+        setForm(toPropertyWriteData(found));
+        setVideoMedia(media.filter(item => item.media_type === 'video'));
+      })
+      .catch(() => setError('Unable to load this property. Please return to the property list and try again.'))
+      .finally(() => setLoading(false));
   }, [id, isEdit]);
 
   function set<K extends keyof FormData>(key: K, value: FormData[K]) {
@@ -273,10 +263,10 @@ export function AdminPropertyFormPage() {
         setCreatedPropertyId(property.id);
         await uploadQueuedVideos(property.id);
       }
-      navigate('/admin/properties');
+      navigate('/admin/properties', { state: { notice: isEdit ? 'Property updated successfully.' : 'Property created successfully.' } });
     } catch (e: unknown) {
       console.error('Property video save failed', { stage: mediaStage ?? 'saving-property', error: e });
-      setError(e instanceof Error ? e.message : 'Save failed');
+      setError('Unable to save this property. Please try again.');
       setSaving(false);
     }
   }
