@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { portalSignIn } from '@/lib/queries/portal';
+import { getPortalLoginErrorMessage } from '@/lib/portalLogin';
 
 const inputClass =
   'w-full bg-transparent border-0 border-b border-outline-variant focus:border-primary focus:ring-0 focus:outline-none pb-2.5 font-body-md text-body-md text-primary placeholder:text-outline-variant transition-colors duration-300';
@@ -21,7 +22,7 @@ export function PortalLoginPage() {
       await portalSignIn(email, password);
       navigate('/portal', { replace: true });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Sign in failed');
+      setError(getPortalLoginErrorMessage(err));
       setLoading(false);
     }
   }
